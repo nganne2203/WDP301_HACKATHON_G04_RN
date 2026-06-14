@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarDays,
   ClipboardList,
+  Images,
   Presentation,
   Scale,
   Trophy,
@@ -36,7 +37,11 @@ import { AiReviewDetailScreen } from '../screens/AiReviewDetailScreen';
 import { JudgeWorkspaceScreen } from '../screens/JudgeWorkspaceScreen';
 import { ScoreSheetScreen } from '../screens/ScoreSheetScreen';
 import { ResultsScreen } from '../screens/ResultsScreen';
+import { MediaHomeScreen } from '../screens/MediaHomeScreen';
+import { MediaUploadScreen } from '../screens/MediaUploadScreen';
+import { MediaDetailScreen } from '../screens/MediaDetailScreen';
 import { useAuth } from '../core/session/AuthContext';
+import type { MediaItem } from '../core/api/types';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -47,6 +52,7 @@ export type MainTabParamList = {
   Events: undefined;
   Workshops: undefined;
   Team: undefined;
+  Media: undefined;
   Judging: undefined;
   Results: undefined;
   Notifications: undefined;
@@ -70,6 +76,8 @@ export type RootStackParamList = {
   RepositoryViewer: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
   RepositoryDetail: { repositoryId: string };
   AiReviewDetail: { reviewId: string };
+  MediaUpload: { eventId: string };
+  MediaDetail: { media: MediaItem };
   ScoreSheet: {
     eventId: string;
     roundId: string;
@@ -102,6 +110,7 @@ function MainTabs() {
   const { hasPermission } = useAuth();
   const canScore = hasPermission('SCORE_VIEW') || hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
   const canViewResults = hasPermission('SCORE_VIEW') || hasPermission('RESULT_PUBLISH');
+  const canUseMedia = hasPermission('EVENT_VIEW') || hasPermission('EVENT_UPDATE');
 
   return (
     <Tab.Navigator
@@ -115,6 +124,7 @@ function MainTabs() {
           if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
+          if (route.name === 'Media') return <Images color={color} size={20} />;
           if (route.name === 'Judging') return <Scale color={color} size={20} />;
           if (route.name === 'Results') return <Trophy color={color} size={20} />;
           if (route.name === 'Notifications') return <Bell color={color} size={20} />;
@@ -125,6 +135,7 @@ function MainTabs() {
       <Tab.Screen name="Events" component={EventListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
+      {canUseMedia && <Tab.Screen name="Media" component={MediaHomeScreen} />}
       {canScore && <Tab.Screen name="Judging" component={JudgeWorkspaceScreen} />}
       {canViewResults && <Tab.Screen name="Results" component={ResultsScreen} />}
       <Tab.Screen name="Notifications" component={NotificationCenterScreen} />
@@ -152,6 +163,8 @@ function AppStack() {
       <RootStack.Screen name="RepositoryViewer" component={RepositoryViewerScreen} options={{ title: 'Repositories' }} />
       <RootStack.Screen name="RepositoryDetail" component={RepositoryDetailScreen} options={{ title: 'Repository Evidence' }} />
       <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
+      <RootStack.Screen name="MediaUpload" component={MediaUploadScreen} options={{ title: 'Upload Media' }} />
+      <RootStack.Screen name="MediaDetail" component={MediaDetailScreen} options={{ title: 'Media Detail' }} />
       <RootStack.Screen name="ScoreSheet" component={ScoreSheetScreen} options={{ title: 'Score Sheet' }} />
     </RootStack.Navigator>
   );
