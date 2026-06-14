@@ -500,3 +500,354 @@ export interface ListTeamsQuery {
   page?: number;
   limit?: number;
 }
+
+export type RoundType = 'PRELIMINARY' | 'FINAL';
+export type RoundStatus = 'DRAFT' | 'OPEN' | 'CLOSED' | 'SCORING' | 'COMPLETED';
+
+export interface RoundTeamSummary {
+  id: string;
+  name?: string;
+  chapterName?: string | null;
+  projectName?: string | null;
+  status?: string;
+  trackId?: string | null;
+  boardNumber?: number | null;
+  placementSlot?: number | null;
+}
+
+export interface Round {
+  id: string;
+  eventId: string;
+  event: { id: string; title?: string; status?: EventStatus | string } | null;
+  trackId: string | null;
+  track: { id: string; code?: string; name?: string } | null;
+  rubricId: string | null;
+  rubric: { id: string; title?: string; totalScore?: number | null } | null;
+  name: string;
+  roundType: RoundType;
+  status: RoundStatus;
+  startTime: string | null;
+  endTime: string | null;
+  submissionDeadline: string | null;
+  publishTime: string | null;
+  maxPromotedTeams: number | null;
+  assignedTeams?: RoundTeamSummary[];
+  assignedTeamIds: string[];
+  promotedTeams?: RoundTeamSummary[];
+  promotedTeamIds: string[];
+  assignedJudges: UserSummary[];
+  assignedJudgeIds?: string[];
+  promotionRule?: string | null;
+  tieBreakRule?: string | null;
+  tieBreakDurationMinutes?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRoundsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  trackId?: string;
+  status?: RoundStatus;
+}
+
+export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED';
+
+export interface Submission {
+  id: string;
+  eventId: string;
+  event: { id: string; title?: string } | null;
+  roundId: string;
+  round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
+  teamId: string;
+  team: { id: string; name?: string; projectName?: string | null } | null;
+  repositoryId?: string | null;
+  repository?: {
+    id: string;
+    repositoryFullName?: string;
+    repositoryUrl?: string;
+    status?: string;
+  } | null;
+  demoUrl: string | null;
+  reportUrl: string | null;
+  presentationUrl: string | null;
+  status: SubmissionStatus;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSubmissionRequest {
+  eventId: string;
+  roundId: string;
+  teamId: string;
+  repositoryId?: string | null;
+  demoUrl?: string | null;
+  reportUrl?: string | null;
+  presentationUrl?: string | null;
+  status?: SubmissionStatus;
+}
+
+export interface UpdateSubmissionRequest {
+  repositoryId?: string | null;
+  demoUrl?: string | null;
+  reportUrl?: string | null;
+  presentationUrl?: string | null;
+}
+
+export interface ListSubmissionsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  roundId?: string;
+  teamId?: string;
+  repositoryId?: string;
+  status?: SubmissionStatus;
+}
+
+export type RepositoryStatus = 'PENDING' | 'ACTIVE' | 'ARCHIVED' | 'DISCONNECTED';
+export type RepositoryAccessState = 'UNKNOWN' | 'PENDING' | 'GRANTED' | 'REVOKED';
+export type RepositoryWebhookStatus = 'NOT_CONFIGURED' | 'PENDING' | 'REGISTERED' | 'FAILED';
+
+export interface RepositoryEventSummary {
+  id: string;
+  title?: string;
+  semester?: string | null;
+  season?: string | null;
+  year?: number | null;
+  status?: EventStatus | string;
+}
+
+export interface RepositoryTeamSummary {
+  id: string;
+  name?: string;
+  projectName?: string | null;
+  chapterName?: string | null;
+  status?: string;
+  boardNumber?: number | null;
+  placementSlot?: number | null;
+}
+
+export interface RepositoryRoundSummary {
+  id: string;
+  name?: string;
+  roundType?: RoundType;
+  status?: RoundStatus;
+}
+
+export interface Repository {
+  id: string;
+  event: RepositoryEventSummary | null;
+  eventId: string;
+  team: RepositoryTeamSummary | null;
+  teamId: string;
+  round: RepositoryRoundSummary | null;
+  roundId: string | null;
+  githubOwner: string;
+  githubRepo: string;
+  repositoryFullName: string;
+  repositoryUrl: string;
+  repositoryLocalPath: string | null;
+  defaultBranch: string;
+  latestCommitSha: string | null;
+  lastProcessedCommitSha: string | null;
+  status: RepositoryStatus;
+  accessState: RepositoryAccessState;
+  accessGrantedAt: string | null;
+  accessRevokedAt: string | null;
+  webhookRegisteredAt: string | null;
+  webhookStatus: RepositoryWebhookStatus;
+  lastWebhookRegistrationError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRepositoriesQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  teamId?: string;
+  roundId?: string;
+  status?: RepositoryStatus;
+  accessState?: RepositoryAccessState;
+  search?: string;
+}
+
+export interface RepositoryCommit {
+  id: string;
+  repositoryId: string;
+  commitSha: string;
+  branch: string | null;
+  provider?: string | null;
+  repositoryFullName?: string | null;
+  authorName?: string | null;
+  authorEmail?: string | null;
+  authorUsername?: string | null;
+  timestamp?: string | null;
+  message?: string | null;
+  commitUrl?: string | null;
+  linesAdded: number;
+  linesRemoved: number;
+  filesChanged: number;
+}
+
+export interface RepositoryCommitDiffFile {
+  filePath: string;
+  previousFilePath?: string | null;
+  fileName?: string | null;
+  language?: string | null;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  cleanPatch?: string;
+  patchSummary?: string;
+  excludedReason?: string | null;
+  isExcluded: boolean;
+  isBinary: boolean;
+  isGenerated: boolean;
+  isMinified: boolean;
+  isBuildArtifact: boolean;
+  isLockFile: boolean;
+  isTruncated: boolean;
+  cleanPatchSize: number;
+  hunkCount: number;
+  addedLineCount: number;
+  removedLineCount: number;
+}
+
+export interface RepositoryCommitDiff {
+  id: string;
+  repositoryId: string;
+  commitId: string | null;
+  baseCommitSha: string | null;
+  headCommitSha: string | null;
+  provider?: string | null;
+  status: string;
+  totalFiles: number;
+  includedFiles: number;
+  excludedFiles: number;
+  totalCleanPatchSize: number;
+  cleanDiffSummary?: string | null;
+  fetchedAt?: string | null;
+  patchSummary?: string;
+  files: RepositoryCommitDiffFile[];
+}
+
+export interface RepositoryStaticAnalysisResult {
+  id: string;
+  repositoryId: string;
+  commitSha: string;
+  source?: string | null;
+  status: string;
+  errorCount: number;
+  warningCount: number;
+  findings: Record<string, unknown>[];
+  rawOutput?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepositoryImpactDecision {
+  id: string;
+  repositoryId: string;
+  commitSha: string;
+  impactScore: number;
+  impactLevel: string;
+  decision: string;
+  reasons: string[];
+  needsHumanReview: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepositoryAiReview {
+  id: string;
+  repositoryId: string;
+  eventId: string | null;
+  teamId: string | null;
+  roundId: string | null;
+  commitId: string | null;
+  commitDiffId: string | null;
+  impactDecisionId: string | null;
+  reviewKind: string;
+  status: string;
+  summary: string;
+  overallSummary: string;
+  needsHumanReview: boolean;
+  isScoreBased: boolean;
+  isFinalDecision: boolean;
+  commitSha: string | null;
+  provider: string | null;
+  modelName: string | null;
+  promptVersion: string | null;
+  requestedAt: string | null;
+  completedAt: string | null;
+  normalizedOutput: Record<string, unknown> | null;
+}
+
+export type TechnicalFindingSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type TechnicalFindingType =
+  | 'ARCHITECTURE'
+  | 'SECURITY'
+  | 'RELIABILITY'
+  | 'PERFORMANCE'
+  | 'TESTING'
+  | 'AI_USAGE'
+  | 'RAG'
+  | 'AGENT'
+  | 'DEPENDENCY'
+  | 'MAINTAINABILITY';
+
+export interface TechnicalFinding {
+  id: string;
+  aiReviewId: string;
+  type?: TechnicalFindingType;
+  severity: TechnicalFindingSeverity;
+  title: string;
+  evidence: string[];
+  comment?: string | null;
+  recommendedAction?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AiReviewCriterion {
+  id: string;
+  aiReviewId: string;
+  criterionId?: string | null;
+  name?: string;
+  criterionName?: string;
+  feedback?: string | null;
+  qualitativeLevel?: string;
+  comment?: string | null;
+  evidence?: string[];
+  risks?: string[];
+  strengths?: string[];
+  weaknesses?: string[];
+  suggestions?: string[];
+}
+
+export interface SuggestedTestCase {
+  id: string;
+  aiReviewId: string;
+  title: string;
+  purpose?: string | null;
+  expectedObservation?: string | null;
+}
+
+export interface SuggestedJudgeQuestion {
+  id: string;
+  aiReviewId: string;
+  question: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+  relatedCriterionId?: string | null;
+}
+
+export interface AiReviewDetail extends RepositoryAiReview {
+  reviewCriteria: AiReviewCriterion[];
+  technicalFindings: TechnicalFinding[];
+  suggestedTestCases: SuggestedTestCase[];
+  suggestedJudgeQuestions: SuggestedJudgeQuestion[];
+}

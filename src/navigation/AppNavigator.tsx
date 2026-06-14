@@ -26,6 +26,11 @@ import { InviteMembersScreen } from '../screens/InviteMembersScreen';
 import { InvitationDecisionScreen } from '../screens/InvitationDecisionScreen';
 import { CheckInScreen } from '../screens/CheckInScreen';
 import { AttendanceHistoryScreen } from '../screens/AttendanceHistoryScreen';
+import { SubmissionsScreen } from '../screens/SubmissionsScreen';
+import { SubmissionEditorScreen } from '../screens/SubmissionEditorScreen';
+import { RepositoryViewerScreen } from '../screens/RepositoryViewerScreen';
+import { RepositoryDetailScreen } from '../screens/RepositoryDetailScreen';
+import { AiReviewDetailScreen } from '../screens/AiReviewDetailScreen';
 import { useAuth } from '../core/session/AuthContext';
 
 export type AuthStackParamList = {
@@ -53,6 +58,11 @@ export type RootStackParamList = {
   InvitationDecision: undefined;
   CheckIn: { eventId: string };
   AttendanceHistory: { eventId: string };
+  Submissions: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
+  SubmissionEditor: { eventId: string; teamId: string; roundId?: string; submissionId?: string };
+  RepositoryViewer: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
+  RepositoryDetail: { repositoryId: string };
+  AiReviewDetail: { reviewId: string };
 };
 
 export type AppNavigationParamList = AuthStackParamList & RootStackParamList;
@@ -111,6 +121,11 @@ function AppStack() {
       <RootStack.Screen name="InvitationDecision" component={InvitationDecisionScreen} options={{ title: 'Join Team' }} />
       <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Check-in' }} />
       <RootStack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: 'Attendance' }} />
+      <RootStack.Screen name="Submissions" component={SubmissionsScreen} options={{ title: 'Submissions' }} />
+      <RootStack.Screen name="SubmissionEditor" component={SubmissionEditorScreen} options={{ title: 'Submission' }} />
+      <RootStack.Screen name="RepositoryViewer" component={RepositoryViewerScreen} options={{ title: 'Repositories' }} />
+      <RootStack.Screen name="RepositoryDetail" component={RepositoryDetailScreen} options={{ title: 'Repository Evidence' }} />
+      <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
     </RootStack.Navigator>
   );
 }
