@@ -13,6 +13,12 @@ const toneMap: Record<string, { bg: string; fg: string }> = {
   CANCELLED: { bg: Colors.redLight, fg: Colors.red },
   UNREAD: { bg: Colors.blue100, fg: Colors.blue700 },
   READ: { bg: Colors.gray100, fg: Colors.textMuted },
+  ASSIGNED: { bg: Colors.blue100, fg: Colors.blue700 },
+  READY: { bg: Colors.greenLight, fg: Colors.greenDark },
+  NO_SUBMISSION: { bg: Colors.redLight, fg: Colors.red },
+  SUBMITTED: { bg: Colors.greenLight, fg: Colors.greenDark },
+  LOCKED: { bg: Colors.gray100, fg: Colors.textSecondary },
+  FINALIST: { bg: Colors.greenLight, fg: Colors.greenDark },
 };
 
 export function StatusBadge({ value }: { value: string }) {

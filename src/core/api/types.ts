@@ -851,3 +851,234 @@ export interface AiReviewDetail extends RepositoryAiReview {
   suggestedTestCases: SuggestedTestCase[];
   suggestedJudgeQuestions: SuggestedJudgeQuestion[];
 }
+
+export type JudgingBoardStatus = 'DRAFT' | 'ASSIGNED' | 'SCORING' | 'COMPLETED';
+
+export interface JudgingBoardTeam {
+  id: string;
+  name: string;
+  projectName: string | null;
+  status: string;
+}
+
+export interface JudgingBoard {
+  id: string;
+  eventId: string;
+  event: { id: string; title?: string } | null;
+  roundId: string;
+  round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
+  trackId: string | null;
+  track: { id: string; code?: string; name?: string } | null;
+  name: string;
+  boardNumber: number;
+  status: JudgingBoardStatus;
+  maxTeams: number;
+  teams: JudgingBoardTeam[];
+  judges: UserSummary[];
+  teamIds: string[];
+  judgeIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListJudgingBoardsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  roundId?: string;
+  trackId?: string;
+  status?: JudgingBoardStatus;
+  search?: string;
+}
+
+export type RubricStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+
+export interface Criterion {
+  id: string;
+  rubricId: string;
+  name: string;
+  description: string | null;
+  maxScore: number;
+  weight: number;
+  order?: number;
+  judgeOnly?: boolean;
+  aiSupportForAudit?: boolean;
+  aiInstruction?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Rubric {
+  id: string;
+  eventId: string;
+  roundId?: string | null;
+  event: { id: string; title?: string; status?: string } | null;
+  round?: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
+  title: string;
+  description: string | null;
+  totalScore: number | null;
+  version?: number;
+  status?: RubricStatus;
+  criteria: Criterion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRubricsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  roundId?: string;
+  status?: RubricStatus;
+}
+
+export type ScoreSheetStatus = 'DRAFT' | 'SUBMITTED' | 'LOCKED';
+
+export interface ScoreEntry {
+  id?: string;
+  criterionId: string;
+  criterion: { id: string; name: string; maxScore: number; weight: number; order?: number } | null;
+  judgeId?: string;
+  scoreValue: number;
+  comment: string | null;
+  isOverridden: boolean;
+  overrideReason: string | null;
+}
+
+export interface ScoreSheet {
+  id: string;
+  eventId: string;
+  roundId: string;
+  round: { id: string; name?: string; roundType?: RoundType } | null;
+  boardId: string | null;
+  board: { id: string; name?: string; boardNumber?: number } | null;
+  teamId: string;
+  team: { id: string; name?: string; projectName?: string | null; chapterName?: string | null } | null;
+  submissionId: string;
+  submission?: { id: string; demoUrl: string | null; reportUrl: string | null; presentationUrl: string | null } | null;
+  judgeId: string;
+  judge: UserSummary | null;
+  rubricId: string | null;
+  rubric?: { id: string; title?: string; totalScore?: number | null } | null;
+  totalScore: number;
+  weightedScore: number;
+  finalScore: number;
+  generalComment: string | null;
+  status: ScoreSheetStatus;
+  submittedAt: string | null;
+  lockedAt?: string | null;
+  scores: ScoreEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitScoreSheetRequest {
+  scoreSheetId?: string;
+  eventId: string;
+  roundId: string;
+  boardId: string;
+  teamId: string;
+  submissionId: string;
+  rubricId?: string | null;
+  generalComment?: string | null;
+  submit?: boolean;
+  scores: { criterionId: string; scoreValue: number; comment?: string | null }[];
+}
+
+export interface ListScoreSheetsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  roundId?: string;
+  teamId?: string;
+  judgeId?: string;
+  status?: ScoreSheetStatus;
+}
+
+export type RankingType = 'TEAM' | 'CHAPTER' | 'INDIVIDUAL';
+export type TieBreakMethod = 'NONE' | 'PENALTY_EVALUATION' | 'MINI_TEST';
+
+export interface RankingTeamSummary {
+  id: string;
+  name?: string;
+  chapterName?: string | null;
+  projectName?: string | null;
+  boardNumber?: number | null;
+  trackId?: string | null;
+  status?: string;
+}
+
+export interface Ranking {
+  id: string;
+  eventId: string;
+  event: { id: string; title?: string; status?: string } | null;
+  rankingType: RankingType;
+  roundId: string | null;
+  round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
+  trackId: string | null;
+  track: { id: string; code?: string; name?: string } | null;
+  teamId: string | null;
+  team: RankingTeamSummary | null;
+  score: number;
+  pointDelta: number;
+  tieBreakMethod: TieBreakMethod;
+  tieBreakScore: number;
+  penaltyScore: number;
+  miniTestScore: number;
+  rank: number;
+  calculationSource: string;
+  calculationSummary: Record<string, unknown> | null;
+  calculatedAt: string | null;
+  isSelectedForFinal: boolean;
+  selectionReason?: string | null;
+  note?: string | null;
+  publishedAt: string | null;
+  publishedBy: UserSummary | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRankingsQuery {
+  page?: number;
+  limit?: number;
+  eventId?: string;
+  roundId?: string;
+  trackId?: string;
+  teamId?: string;
+  rankingType?: RankingType;
+}
+
+export interface GenerateRankingsRequest {
+  eventId: string;
+  roundId: string;
+  rankingType?: RankingType;
+}
+
+export interface GenerateRankingsResult {
+  generated: number;
+  rankings: Ranking[];
+}
+
+export interface SelectFinalistsRequest {
+  eventId: string;
+  roundId: string;
+}
+
+export interface SelectFinalistsResult {
+  selected: number;
+  rankings: Ranking[];
+}
+
+export type RepositoryAccessAction = 'NONE' | 'FREEZE' | 'REVOKE';
+
+export interface PublishResultsRequest {
+  eventId: string;
+  roundId: string;
+  repositoryAccessAction?: RepositoryAccessAction;
+}
+
+export interface PublishResultsResult {
+  published: number;
+  repositoryAccessAction: RepositoryAccessAction;
+  notified?: number;
+}

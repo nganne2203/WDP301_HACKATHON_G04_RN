@@ -6,6 +6,8 @@ import {
   CalendarDays,
   ClipboardList,
   Presentation,
+  Scale,
+  Trophy,
   UsersRound,
   UserCircle,
 } from 'lucide-react-native';
@@ -31,6 +33,9 @@ import { SubmissionEditorScreen } from '../screens/SubmissionEditorScreen';
 import { RepositoryViewerScreen } from '../screens/RepositoryViewerScreen';
 import { RepositoryDetailScreen } from '../screens/RepositoryDetailScreen';
 import { AiReviewDetailScreen } from '../screens/AiReviewDetailScreen';
+import { JudgeWorkspaceScreen } from '../screens/JudgeWorkspaceScreen';
+import { ScoreSheetScreen } from '../screens/ScoreSheetScreen';
+import { ResultsScreen } from '../screens/ResultsScreen';
 import { useAuth } from '../core/session/AuthContext';
 
 export type AuthStackParamList = {
@@ -42,6 +47,8 @@ export type MainTabParamList = {
   Events: undefined;
   Workshops: undefined;
   Team: undefined;
+  Judging: undefined;
+  Results: undefined;
   Notifications: undefined;
   Profile: undefined;
 };
@@ -63,6 +70,17 @@ export type RootStackParamList = {
   RepositoryViewer: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
   RepositoryDetail: { repositoryId: string };
   AiReviewDetail: { reviewId: string };
+  ScoreSheet: {
+    eventId: string;
+    roundId: string;
+    boardId: string;
+    teamId: string;
+    teamName: string;
+    submissionId?: string;
+    rubricId?: string;
+    scoreSheetId?: string;
+    repositoryId?: string;
+  };
 };
 
 export type AppNavigationParamList = AuthStackParamList & RootStackParamList;
@@ -81,6 +99,10 @@ function AuthNavigator() {
 }
 
 function MainTabs() {
+  const { hasPermission } = useAuth();
+  const canScore = hasPermission('SCORE_VIEW') || hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
+  const canViewResults = hasPermission('SCORE_VIEW') || hasPermission('RESULT_PUBLISH');
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -93,6 +115,8 @@ function MainTabs() {
           if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
+          if (route.name === 'Judging') return <Scale color={color} size={20} />;
+          if (route.name === 'Results') return <Trophy color={color} size={20} />;
           if (route.name === 'Notifications') return <Bell color={color} size={20} />;
           return <UserCircle color={color} size={20} />;
         },
@@ -101,6 +125,8 @@ function MainTabs() {
       <Tab.Screen name="Events" component={EventListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
+      {canScore && <Tab.Screen name="Judging" component={JudgeWorkspaceScreen} />}
+      {canViewResults && <Tab.Screen name="Results" component={ResultsScreen} />}
       <Tab.Screen name="Notifications" component={NotificationCenterScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -126,6 +152,7 @@ function AppStack() {
       <RootStack.Screen name="RepositoryViewer" component={RepositoryViewerScreen} options={{ title: 'Repositories' }} />
       <RootStack.Screen name="RepositoryDetail" component={RepositoryDetailScreen} options={{ title: 'Repository Evidence' }} />
       <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
+      <RootStack.Screen name="ScoreSheet" component={ScoreSheetScreen} options={{ title: 'Score Sheet' }} />
     </RootStack.Navigator>
   );
 }
