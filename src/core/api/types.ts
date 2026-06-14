@@ -227,6 +227,22 @@ export interface Workshop {
   updatedAt: string;
 }
 
+export interface WorkshopQuestionVote {
+  voter: UserSummary | null;
+  votedAt: string;
+}
+
+export interface WorkshopQuestion {
+  id: string;
+  workshopId: string;
+  author: UserSummary | null;
+  content: string;
+  voteCount: number;
+  votes?: WorkshopQuestionVote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ListWorkshopsQuery {
   page?: number;
   limit?: number;
