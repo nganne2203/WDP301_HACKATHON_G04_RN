@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CalendarClock, ChevronRight, Presentation } from 'lucide-react-native';
+import { CalendarClock, ChevronRight, Presentation, TicketCheck } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { timelinesApi } from '../features/timelines/api/timelinesApi';
 import { workshopsApi } from '../features/workshops/api/workshopsApi';
@@ -66,6 +66,13 @@ export function EventDetailScreen({ navigation, route }: Props) {
         <Stat label="Max teams" value={String(event.maxTeams ?? 'TBA')} />
         <Stat label="Team size" value={`${event.minTeamMembers ?? '?'}-${event.maxTeamMembers ?? '?'}`} />
       </View>
+
+      <SectionAction
+        icon={<TicketCheck color={Colors.primary} size={19} />}
+        title="Participant registration"
+        subtitle="Register yourself for this event"
+        onPress={() => navigation.navigate('EventRegistration', { eventId })}
+      />
 
       <SectionAction
         icon={<CalendarClock color={Colors.primary} size={19} />}
