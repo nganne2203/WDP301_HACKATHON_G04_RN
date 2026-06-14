@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ClipboardCheck, MailPlus, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
+import { ClipboardCheck, FileText, GitBranch, MailPlus, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
@@ -196,11 +196,35 @@ export function TeamHomeScreen() {
             )}
 
             {!!team && (
-              <TeamSummary
-                canInvite={canManageInvitations(team, user?.id, selectedEvent)}
-                onInvite={() => navigation.navigate('InviteMembers', { teamId: team.id, eventId: team.eventId })}
-                team={team}
-              />
+              <>
+                <TeamSummary
+                  canInvite={canManageInvitations(team, user?.id, selectedEvent)}
+                  onInvite={() => navigation.navigate('InviteMembers', { teamId: team.id, eventId: team.eventId })}
+                  team={team}
+                />
+                <View style={styles.teamTools}>
+                  <ActionButton
+                    icon={<FileText color={Colors.primary} size={18} />}
+                    label="Submissions"
+                    onPress={() => navigation.navigate('Submissions', {
+                      eventId: team.eventId,
+                      teamId: team.id,
+                      eventTitle: selectedEvent?.title,
+                      teamName: team.name,
+                    })}
+                  />
+                  <ActionButton
+                    icon={<GitBranch color={Colors.primary} size={18} />}
+                    label="Repositories"
+                    onPress={() => navigation.navigate('RepositoryViewer', {
+                      eventId: team.eventId,
+                      teamId: team.id,
+                      eventTitle: selectedEvent?.title,
+                      teamName: team.name,
+                    })}
+                  />
+                </View>
+              </>
             )}
 
             {!!team && <Text style={styles.sectionLabel}>Confirmed members</Text>}
@@ -356,6 +380,7 @@ const styles = StyleSheet.create({
   stat: { backgroundColor: Colors.gray50, borderRadius: Radius.md, flex: 1, padding: 11 },
   statValue: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
   statLabel: { color: Colors.textSecondary, fontSize: 11, marginTop: 2 },
+  teamTools: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   outlineButton: {
     alignItems: 'center',
     borderColor: Colors.border,
