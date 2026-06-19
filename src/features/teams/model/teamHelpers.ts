@@ -4,6 +4,7 @@ export interface MemberInviteRow {
   id: string;
   fullName: string;
   email: string;
+  githubUsername: string;
 }
 
 export function createMemberRow(): MemberInviteRow {
@@ -11,6 +12,7 @@ export function createMemberRow(): MemberInviteRow {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     fullName: '',
     email: '',
+    githubUsername: '',
   };
 }
 
@@ -32,7 +34,16 @@ export function normalizeMemberRows(rows: MemberInviteRow[], currentUserEmail?: 
     .map((row) => ({
       fullName: row.fullName.trim(),
       email: row.email.trim().toLowerCase(),
+      githubUsername: row.githubUsername.trim(),
     }))
+    .filter((row) => row.fullName || row.email || row.githubUsername)
+    .map((row) => {
+      if (!row.fullName || !row.email || !row.githubUsername) {
+        throw new Error('Each invited member must include name, email, and GitHub username.');
+      }
+
+      return row;
+    })
     .filter((row) => {
       if (!row.email || seen.has(row.email) || row.email === currentEmail) return false;
       seen.add(row.email);

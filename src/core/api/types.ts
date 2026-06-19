@@ -52,6 +52,7 @@ export interface User {
   avatarUrl?: string | null;
   phone?: string | null;
   bio?: string | null;
+  githubUsername?: string | null;
   studentType?: 'FPT' | 'EXTERNAL' | null;
   studentId?: string | null;
   schoolName?: string | null;
@@ -78,6 +79,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
+  githubUsername: string;
   studentType: 'FPT' | 'EXTERNAL';
   studentId: string;
   schoolName?: string;
@@ -88,6 +90,7 @@ export interface UpdateProfileRequest {
   avatarUrl?: string | null;
   phone?: string | null;
   bio?: string | null;
+  githubUsername?: string | null;
 }
 
 export type EventStatus =
@@ -179,6 +182,7 @@ export interface UserSummary {
   id: string;
   fullName?: string;
   email?: string;
+  githubUsername?: string | null;
 }
 
 export interface EventSummary {
@@ -392,6 +396,7 @@ export interface ParticipantUserSummary {
   id: string;
   fullName?: string;
   email?: string;
+  githubUsername?: string | null;
   status?: UserStatus;
   studentId?: string | null;
   studentType?: 'FPT' | 'EXTERNAL' | null;
@@ -499,6 +504,7 @@ export interface TeamUserSummary {
   id: string;
   email: string;
   fullName?: string;
+  githubUsername?: string | null;
   status?: UserStatus;
   mustChangePassword?: boolean;
 }
