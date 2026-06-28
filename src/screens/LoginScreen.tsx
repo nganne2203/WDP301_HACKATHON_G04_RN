@@ -109,7 +109,12 @@ export function LoginScreen({ navigation }: Props) {
           {!!emailError && <Text style={styles.errText}>{emailError}</Text>}
 
           <View style={styles.gap14} />
-          <Text style={styles.label}>Password</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>Password</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotLink}>Forgot password?</Text>
+            </TouchableOpacity>
+          </View>
           <View style={[styles.inputRow, !!passwordError && styles.inputErr]}>
             <Lock color={Colors.textSecondary} size={16} style={styles.icon} />
             <TextInput
@@ -193,7 +198,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 12,
   },
-  label: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600', marginBottom: 6 },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  label: { color: Colors.textPrimary, fontSize: 14, fontWeight: '600' },
+  forgotLink: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
   inputRow: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
