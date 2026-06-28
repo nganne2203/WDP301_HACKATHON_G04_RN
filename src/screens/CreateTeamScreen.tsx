@@ -74,10 +74,17 @@ export function CreateTeamScreen({ navigation, route }: Props) {
       return;
     }
 
-    const normalizedMembers = normalizeMemberRows(members, user?.email);
     const invalidEmail = members.some((row) => row.email.trim() && !isEmail(row.email));
     if (invalidEmail) {
       setFormError('Please enter valid invitation emails');
+      return;
+    }
+
+    let normalizedMembers;
+    try {
+      normalizedMembers = normalizeMemberRows(members, user?.email);
+    } catch (memberError) {
+      setFormError(memberError instanceof Error ? memberError.message : 'Please check invited member details');
       return;
     }
 
@@ -154,6 +161,15 @@ export function CreateTeamScreen({ navigation, route }: Props) {
               placeholderTextColor={Colors.textMuted}
               style={[styles.input, styles.inputSpacing]}
               value={member.email}
+            />
+            <TextInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={(value) => updateMember(member.id, { githubUsername: value })}
+              placeholder="github-user"
+              placeholderTextColor={Colors.textMuted}
+              style={[styles.input, styles.inputSpacing]}
+              value={member.githubUsername}
             />
           </View>
         ))}

@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Mail, Phone, ShieldCheck, UserRound } from 'lucide-react-native';
+import { GitBranch, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react-native';
 import { profileApi } from '../features/profile/api/profileApi';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, initials } from '../core/utils/format';
@@ -25,6 +25,7 @@ export function ProfileScreen() {
   const [phone, setPhone] = useState(user?.phone || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [githubUsername, setGithubUsername] = useState(user?.githubUsername || '');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -34,6 +35,7 @@ export function ProfileScreen() {
     setPhone(user?.phone || '');
     setBio(user?.bio || '');
     setAvatarUrl(user?.avatarUrl || '');
+    setGithubUsername(user?.githubUsername || '');
   }, [user]);
 
   async function handleSave() {
@@ -51,6 +53,7 @@ export function ProfileScreen() {
         phone: phone.trim() || null,
         bio: bio.trim() || null,
         avatarUrl: avatarUrl.trim() || null,
+        githubUsername: githubUsername.trim() || null,
       });
       setUser(response.data);
       setMessage('Profile updated');
@@ -129,6 +132,22 @@ export function ProfileScreen() {
             />
           </Field>
 
+          <Field label="GitHub Username" icon={<GitBranch color={Colors.textSecondary} size={16} />}>
+            <TextInput
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={(value) => {
+                setGithubUsername(value);
+                setError('');
+                setMessage('');
+              }}
+              placeholder="github-user"
+              placeholderTextColor={Colors.textMuted}
+              style={styles.input}
+              value={githubUsername}
+            />
+          </Field>
+
           <Text style={styles.label}>Bio</Text>
           <TextInput
             multiline
@@ -155,6 +174,7 @@ export function ProfileScreen() {
           </View>
           <Text style={styles.meta}>Roles: {user.roles.map((role) => role.name).join(', ') || 'None'}</Text>
           <Text style={styles.meta}>Permissions: {user.permissions.length}</Text>
+          {!!user.githubUsername && <Text style={styles.meta}>GitHub: {user.githubUsername}</Text>}
           {!!user.studentId && <Text style={styles.meta}>Student ID: {user.studentId}</Text>}
           {!!user.schoolName && <Text style={styles.meta}>School: {user.schoolName}</Text>}
         </View>

@@ -69,7 +69,14 @@ export function InviteMembersScreen({ route }: Props) {
       return;
     }
 
-    const members = normalizeMemberRows(rows, user?.email);
+    let members;
+    try {
+      members = normalizeMemberRows(rows, user?.email);
+    } catch (memberError) {
+      setFormError(memberError instanceof Error ? memberError.message : 'Please check invited member details');
+      return;
+    }
+
     if (!members.length) {
       setFormError('Enter at least one member email');
       return;
@@ -172,6 +179,15 @@ export function InviteMembersScreen({ route }: Props) {
                   placeholderTextColor={Colors.textMuted}
                   style={[styles.input, styles.inputSpacing]}
                   value={row.email}
+                />
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={(value) => updateRow(row.id, { githubUsername: value })}
+                  placeholder="github-user"
+                  placeholderTextColor={Colors.textMuted}
+                  style={[styles.input, styles.inputSpacing]}
+                  value={row.githubUsername}
                 />
               </View>
             ))}

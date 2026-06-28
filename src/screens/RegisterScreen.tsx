@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Eye, EyeOff, GraduationCap, IdCard, Lock, Mail, Trophy, User } from 'lucide-react-native';
+import { Eye, EyeOff, GitBranch, GraduationCap, IdCard, Lock, Mail, Trophy, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
@@ -25,6 +25,7 @@ type StudentType = 'FPT' | 'EXTERNAL';
 interface Errors {
   fullName?: string;
   email?: string;
+  githubUsername?: string;
   studentId?: string;
   schoolName?: string;
   password?: string;
@@ -36,6 +37,7 @@ export function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [githubUsername, setGithubUsername] = useState('');
   const [studentType, setStudentType] = useState<StudentType>('FPT');
   const [studentId, setStudentId] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -50,8 +52,14 @@ export function RegisterScreen({ navigation }: Props) {
 
   function validate() {
     const next: Errors = {};
+    const githubUsernamePattern = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
     if (fullName.trim().length < 2) next.fullName = 'Full name must be at least 2 characters';
     if (!email.includes('@')) next.email = 'Please enter a valid email';
+    if (!githubUsername.trim()) {
+      next.githubUsername = 'Please enter your GitHub username';
+    } else if (githubUsername.trim().length > 39 || !githubUsernamePattern.test(githubUsername.trim())) {
+      next.githubUsername = 'GitHub username can only contain letters, numbers, and hyphens';
+    }
     if (!studentId.trim()) next.studentId = 'Please enter your student ID';
     if (studentType === 'EXTERNAL' && !schoolName.trim()) next.schoolName = 'Please enter your school name';
     if (password.length < 8) next.password = 'Password must be at least 8 characters';
@@ -72,6 +80,7 @@ export function RegisterScreen({ navigation }: Props) {
         email: email.trim(),
         password,
         fullName: fullName.trim(),
+        githubUsername: githubUsername.trim(),
         studentType,
         studentId: studentId.trim(),
         schoolName: studentType === 'EXTERNAL' ? schoolName.trim() : undefined,
@@ -141,6 +150,23 @@ export function RegisterScreen({ navigation }: Props) {
                 placeholderTextColor={Colors.textMuted}
                 style={styles.input}
                 value={email}
+              />
+            </InputRow>
+          </Field>
+
+          <Field label="GitHub Username" error={errors.githubUsername}>
+            <InputRow icon={<GitBranch color={Colors.textSecondary} size={16} />} error={!!errors.githubUsername}>
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={(value) => {
+                  setGithubUsername(value);
+                  clear('githubUsername');
+                }}
+                placeholder="github-user"
+                placeholderTextColor={Colors.textMuted}
+                style={styles.input}
+                value={githubUsername}
               />
             </InputRow>
           </Field>
