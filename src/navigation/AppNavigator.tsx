@@ -15,6 +15,7 @@ import {
 import { Colors } from '../theme/colors';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
+import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { EventListScreen } from '../screens/EventListScreen';
 import { EventDetailScreen } from '../screens/EventDetailScreen';
 import { TimelineScreen } from '../screens/TimelineScreen';
@@ -46,6 +47,7 @@ import type { MediaItem } from '../core/api/types';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
 };
 
 export type MainTabParamList = {
@@ -102,6 +104,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </AuthStack.Navigator>
   );
 }
