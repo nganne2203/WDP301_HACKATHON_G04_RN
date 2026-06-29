@@ -622,6 +622,65 @@ export interface InvitationDecisionResult {
   invitation: TeamInvitation;
 }
 
+export type ChatParticipantRole = 'member' | 'mentor';
+export type ChatMessageType = 'text' | 'image' | 'file';
+
+export interface ChatTeamSummary {
+  id: string;
+  eventId: string;
+  name: string;
+  projectName?: string | null;
+  status?: string;
+}
+
+export interface ChatSender {
+  id: string;
+  email?: string;
+  fullName?: string;
+  avatarUrl?: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatRoomId: string;
+  teamId: string;
+  senderId: string;
+  sender?: ChatSender | null;
+  senderRole: ChatParticipantRole;
+  message: string;
+  messageType: ChatMessageType;
+  clientMessageId?: string | null;
+  isSeen: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  status?: 'sending' | 'sent' | 'failed';
+}
+
+export interface ChatRoom {
+  id: string;
+  teamId: string;
+  roomKey: string;
+  team?: ChatTeamSummary | null;
+  participantRole?: ChatParticipantRole | null;
+  unreadCount: number;
+  lastMessage?: ChatMessage | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SendChatMessageRequest {
+  teamId?: string;
+  chatRoomId?: string;
+  message: string;
+  messageType?: ChatMessageType;
+  clientMessageId?: string;
+}
+
+export interface ChatUnreadCount {
+  total: number;
+  rooms: Array<{ chatRoomId: string; teamId: string; unreadCount: number }>;
+}
+
 export interface ListTeamsQuery {
   eventId?: string;
   trackId?: string;

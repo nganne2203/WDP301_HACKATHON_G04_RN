@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ClipboardList,
   Images,
+  MessageCircle,
   Presentation,
   Scale,
   Trophy,
@@ -24,6 +25,8 @@ import { WorkshopDetailScreen } from '../screens/WorkshopDetailScreen';
 import { NotificationCenterScreen } from '../screens/NotificationCenterScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { TeamHomeScreen } from '../screens/TeamHomeScreen';
+import { ChatRoomsScreen } from '../screens/ChatRoomsScreen';
+import { TeamChatScreen } from '../screens/TeamChatScreen';
 import { EventRegistrationScreen } from '../screens/EventRegistrationScreen';
 import { CreateTeamScreen } from '../screens/CreateTeamScreen';
 import { InviteMembersScreen } from '../screens/InviteMembersScreen';
@@ -54,6 +57,7 @@ export type MainTabParamList = {
   Events: undefined;
   Workshops: undefined;
   Team: undefined;
+  Chats: undefined;
   Media: undefined;
   Judging: undefined;
   Results: undefined;
@@ -80,6 +84,8 @@ export type RootStackParamList = {
   AiReviewDetail: { reviewId: string };
   MediaUpload: { eventId: string };
   MediaDetail: { media: MediaItem };
+  ChatRooms: undefined;
+  TeamChat: { chatRoomId?: string; teamId: string; teamName?: string };
   ScoreSheet: {
     eventId: string;
     roundId: string;
@@ -127,6 +133,7 @@ function MainTabs() {
           if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
+          if (route.name === 'Chats') return <MessageCircle color={color} size={20} />;
           if (route.name === 'Media') return <Images color={color} size={20} />;
           if (route.name === 'Judging') return <Scale color={color} size={20} />;
           if (route.name === 'Results') return <Trophy color={color} size={20} />;
@@ -138,6 +145,7 @@ function MainTabs() {
       <Tab.Screen name="Events" component={EventListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
+      <Tab.Screen name="Chats" component={ChatRoomsScreen} />
       {canUseMedia && <Tab.Screen name="Media" component={MediaHomeScreen} />}
       {canScore && <Tab.Screen name="Judging" component={JudgeWorkspaceScreen} />}
       {canViewResults && <Tab.Screen name="Results" component={ResultsScreen} />}
@@ -168,6 +176,12 @@ function AppStack() {
       <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
       <RootStack.Screen name="MediaUpload" component={MediaUploadScreen} options={{ title: 'Upload Media' }} />
       <RootStack.Screen name="MediaDetail" component={MediaDetailScreen} options={{ title: 'Media Detail' }} />
+      <RootStack.Screen name="ChatRooms" component={ChatRoomsScreen} options={{ title: 'Team Chats' }} />
+      <RootStack.Screen
+        name="TeamChat"
+        component={TeamChatScreen}
+        options={({ route }) => ({ title: route.params.teamName || 'Team Chat' })}
+      />
       <RootStack.Screen name="ScoreSheet" component={ScoreSheetScreen} options={{ title: 'Score Sheet' }} />
     </RootStack.Navigator>
   );

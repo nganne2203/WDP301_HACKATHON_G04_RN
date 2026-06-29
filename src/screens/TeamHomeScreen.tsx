@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ClipboardCheck, FileText, GitBranch, MailPlus, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
+import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
@@ -220,6 +220,14 @@ export function TeamHomeScreen() {
                       eventId: team.eventId,
                       teamId: team.id,
                       eventTitle: selectedEvent?.title,
+                      teamName: team.name,
+                    })}
+                  />
+                  <ActionButton
+                    icon={<MessageCircle color={Colors.primary} size={18} />}
+                    label="Team chat"
+                    onPress={() => navigation.navigate('TeamChat', {
+                      teamId: team.id,
                       teamName: team.name,
                     })}
                   />
