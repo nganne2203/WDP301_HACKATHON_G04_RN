@@ -14,9 +14,10 @@ import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { SendHorizontal } from 'lucide-react-native';
 import { chatApi } from '../features/chat/api/chatApi';
+import { teamsApi } from '../features/teams/api/teamsApi';
 import { useChatStore } from '../features/chat/model/chatStore';
 import { useAuth } from '../core/session/AuthContext';
-import type { ChatMessage, ChatRoom } from '../core/api/types';
+import type { ChatMessage, ChatRoom, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, initials } from '../core/utils/format';
 import { EmptyState, ErrorState } from '../shared/ui/ScreenState';
@@ -38,6 +39,7 @@ export function TeamChatScreen() {
   const markRoomSeen = useChatStore((state) => state.markRoomSeen);
   const typingUsers = useChatStore((state) => state.typingUsers[route.params.teamId] || []);
   const [room, setRoom] = useState<ChatRoom | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -63,6 +65,9 @@ export function TeamChatScreen() {
 
       setRoom(activeRoom);
       upsertRoom(activeRoom);
+
+      const teamResponse = await teamsApi.getById(activeRoom.teamId);
+      setTeam(teamResponse.data);
 
       const messagesResponse = await chatApi.listMessages(activeRoom.id, { limit: 80 });
       setMessages(activeRoom.id, messagesResponse.data);
@@ -198,6 +203,24 @@ export function TeamChatScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+      <View style={styles.headerCard}>
+        <Text style={styles.headerTitle}>{team?.name || route.params.teamName || 'Team chat'}</Text>
+        <Text style={styles.headerSubtitle}>{team?.projectName || 'Shared team conversation with assigned mentors'}</Text>
+        <View style={styles.mentorRow}>
+          <Text style={styles.mentorHeading}>Assigned mentors</Text>
+          {team?.assignedMentors && team.assignedMentors.length > 0 ? (
+            <View style={styles.mentorPills}>
+              {team.assignedMentors.map((mentor) => (
+                <View key={mentor.id} style={styles.mentorPill}>
+                  <Text style={styles.mentorPillText}>{mentor.fullName || mentor.email}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.mentorEmpty}>No mentors assigned yet.</Text>
+          )}
+        </View>
+      </View>
       <View style={styles.statusBar}>
         <View style={styles.statusDot} />
         <Text style={styles.statusText}>
@@ -268,6 +291,26 @@ const styles = StyleSheet.create({
   container: { backgroundColor: Colors.background, flex: 1 },
   center: { alignItems: 'center', backgroundColor: Colors.background, flex: 1, justifyContent: 'center' },
   muted: { color: Colors.textSecondary, fontSize: 13, marginTop: 10 },
+  headerCard: {
+    backgroundColor: Colors.surface,
+    borderBottomColor: Colors.border,
+    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  headerTitle: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
+  headerSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 4 },
+  mentorRow: { marginTop: 10 },
+  mentorHeading: { color: Colors.textPrimary, fontSize: 12, fontWeight: '800', marginBottom: 7 },
+  mentorPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mentorPill: {
+    backgroundColor: Colors.blue100,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  mentorPillText: { color: Colors.primary, fontSize: 11, fontWeight: '700' },
+  mentorEmpty: { color: Colors.textMuted, fontSize: 12 },
   statusBar: {
     alignItems: 'center',
     backgroundColor: Colors.surface,

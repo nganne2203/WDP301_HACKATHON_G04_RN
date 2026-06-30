@@ -281,6 +281,20 @@ function TeamSummary({ canInvite, onInvite, team }: { canInvite: boolean; onInvi
         <Stat label="Invites" value={String(team.invitations.filter((invite) => invite.status === 'PENDING').length)} />
         <Stat label="Required" value={String(team.event?.minTeamMembers || 3)} />
       </View>
+      <View style={styles.mentorSection}>
+        <Text style={styles.mentorLabel}>Assigned mentors</Text>
+        {team.assignedMentors && team.assignedMentors.length > 0 ? (
+          <View style={styles.mentorChips}>
+            {team.assignedMentors.map((mentor) => (
+              <View key={mentor.id} style={styles.mentorChip}>
+                <Text style={styles.mentorChipText}>{mentor.fullName || mentor.email}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.mentorEmpty}>No mentors assigned yet.</Text>
+        )}
+      </View>
       {canInvite && (
         <TouchableOpacity style={styles.outlineButton} onPress={onInvite}>
           <MailPlus color={Colors.primary} size={17} />
@@ -373,6 +387,17 @@ const styles = StyleSheet.create({
     padding: 16,
     ...Shadow.sm,
   },
+  mentorSection: { marginTop: 14 },
+  mentorLabel: { color: Colors.textPrimary, fontSize: 13, fontWeight: '800', marginBottom: 8 },
+  mentorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mentorChip: {
+    backgroundColor: Colors.blue100,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  mentorChipText: { color: Colors.primary, fontSize: 12, fontWeight: '700' },
+  mentorEmpty: { color: Colors.textMuted, fontSize: 12 },
   flex: { flex: 1 },
   teamName: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
   rejection: {
