@@ -8,6 +8,7 @@ import type { Event, Pagination } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -31,15 +32,16 @@ export function EventListScreen() {
 
     try {
       const response = await eventsApi.list({ page: 1, limit: 20 });
-      setEvents(response.data);
-      setPagination(response.pagination);
+      const visibleEvents = filterVisibleEvents(response.data, user);
+      setEvents(visibleEvents);
+      setPagination(response.pagination ? { ...response.pagination, totalItems: visibleEvents.length, totalPages: 1 } : null);
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     loadEvents();

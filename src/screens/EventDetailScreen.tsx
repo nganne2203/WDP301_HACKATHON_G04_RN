@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CalendarClock, ChevronRight, Presentation, TicketCheck } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { CalendarClock, CheckCircle2, ChevronRight, Presentation, QrCode, TicketCheck } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { timelinesApi } from '../features/timelines/api/timelinesApi';
 import { workshopsApi } from '../features/workshops/api/workshopsApi';
-import type { Event, TimelineEvent, Workshop } from '../core/api/types';
+import type { Event, Participant, TimelineEvent, Workshop } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { errorMessage, formatDateRange, formatDateTime } from '../core/utils/format';
+import { errorMessage, formatDateRange } from '../core/utils/format';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
 import { Colors, Radius, Shadow } from '../theme/colors';
@@ -20,6 +22,7 @@ export function EventDetailScreen({ navigation, route }: Props) {
   const [event, setEvent] = useState<Event | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [participant, setParticipant] = useState<Participant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -46,6 +49,19 @@ export function EventDetailScreen({ navigation, route }: Props) {
     loadDetail();
   }, [loadDetail]);
 
+  const loadParticipant = useCallback(async () => {
+    try {
+      const response = await participantsApi.getMine(eventId);
+      setParticipant(response.data);
+    } catch {
+      setParticipant(null);
+    }
+  }, [eventId]);
+
+  useFocusEffect(useCallback(() => {
+    loadParticipant();
+  }, [loadParticipant]));
+
   if (loading) return <LoadingState label="Loading event..." />;
   if (error) return <ErrorState message={error} onRetry={loadDetail} />;
   if (!event) return <EmptyState title="Event not found" />;
@@ -67,6 +83,22 @@ export function EventDetailScreen({ navigation, route }: Props) {
         <Stat label="Team size" value={`${event.minTeamMembers ?? '?'}-${event.maxTeamMembers ?? '?'}`} />
       </View>
 
+      {participant && (
+        <View style={[styles.checkInCard, participant.checkInStatus === 'CHECKED_IN' && styles.checkInCardDone]}>
+          <CheckCircle2 color={participant.checkInStatus === 'CHECKED_IN' ? Colors.greenDark : Colors.textMuted} size={25} />
+          <View style={styles.checkInTextWrap}>
+            <Text style={[styles.checkInTitle, participant.checkInStatus === 'CHECKED_IN' && styles.checkInTitleDone]}>
+              {participant.checkInStatus === 'CHECKED_IN' ? 'Checked in' : 'Not checked in yet'}
+            </Text>
+            <Text style={styles.checkInSub}>
+              {participant.checkInStatus === 'CHECKED_IN'
+                ? 'Your attendance for this event has been confirmed.'
+                : 'Scan the coordinator QR code when check-in opens.'}
+            </Text>
+          </View>
+        </View>
+      )}
+
       <SectionAction
         icon={<TicketCheck color={Colors.primary} size={19} />}
         title="Participant registration"
@@ -74,31 +106,28 @@ export function EventDetailScreen({ navigation, route }: Props) {
         onPress={() => navigation.navigate('EventRegistration', { eventId })}
       />
 
+      {participant?.checkInStatus !== 'CHECKED_IN' && (
+        <SectionAction
+          icon={<QrCode color={Colors.primary} size={19} />}
+          title="Check in with QR"
+          subtitle="Scan the QR code displayed by the coordinator"
+          onPress={() => navigation.navigate('QrCheckIn', { eventId, eventTitle: event.title })}
+        />
+      )}
+
       <SectionAction
         icon={<CalendarClock color={Colors.primary} size={19} />}
         title="Timeline"
         subtitle={`${timeline.length} upcoming or recent items`}
         onPress={() => navigation.navigate('Timeline', { eventId, eventTitle: event.title })}
       />
-      {timeline.map((item) => (
-        <View key={item.id} style={styles.itemRow}>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.itemSub}>{formatDateTime(item.startTime)}</Text>
-        </View>
-      ))}
 
       <SectionAction
         icon={<Presentation color={Colors.primary} size={19} />}
         title="Workshops"
         subtitle={`${workshops.length} workshops linked to this event`}
-        onPress={() => undefined}
+        onPress={() => navigation.navigate('MainTabs', { screen: 'Workshops' })}
       />
-      {workshops.map((item) => (
-        <TouchableOpacity key={item.id} style={styles.itemRow} onPress={() => navigation.navigate('WorkshopDetail', { workshopId: item.id })}>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.itemSub}>{formatDateTime(item.startTime)}</Text>
-        </TouchableOpacity>
-      ))}
     </ScrollView>
   );
 }
@@ -169,6 +198,22 @@ const styles = StyleSheet.create({
   },
   statValue: { color: Colors.textPrimary, fontSize: 20, fontWeight: '800' },
   statLabel: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
+  checkInCard: {
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 11,
+    marginTop: 12,
+    padding: 14,
+  },
+  checkInCardDone: { backgroundColor: '#F0FDF4', borderColor: Colors.greenBorder },
+  checkInTextWrap: { flex: 1 },
+  checkInTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '800' },
+  checkInTitleDone: { color: Colors.greenDark },
+  checkInSub: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 2 },
   sectionAction: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
@@ -183,14 +228,4 @@ const styles = StyleSheet.create({
   sectionText: { flex: 1 },
   sectionTitle: { color: Colors.textPrimary, fontSize: 15, fontWeight: '800' },
   sectionSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
-  itemRow: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    marginTop: 8,
-    padding: 13,
-  },
-  itemTitle: { color: Colors.textPrimary, fontSize: 14, fontWeight: '700' },
-  itemSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
 });

@@ -19,6 +19,7 @@ import type { Event, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange, initials } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -48,7 +49,7 @@ export function TeamHomeScreen() {
     setError('');
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      const list = response.data;
+      const list = filterVisibleEvents(response.data, user);
       setEvents(list);
       setSelectedEventId((current) => {
         if (current && list.some((event) => event.id === current)) return current;
@@ -60,7 +61,7 @@ export function TeamHomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   const loadTeam = useCallback(async (eventId: string) => {
     if (!eventId) {
