@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Eye, EyeOff, Lock, Mail, Trophy } from 'lucide-react-native';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
@@ -77,7 +78,7 @@ export function LoginScreen({ navigation }: Props) {
       >
         <View style={styles.logoWrap}>
           <View style={styles.logoBox}>
-            <Trophy color="#fff" size={36} />
+            <Image source={require('../../assets/brand/Logo1.png')} style={styles.logoImage} />
           </View>
           <Text style={styles.title}>Welcome to SEAL</Text>
           <Text style={styles.subtitle}>Hackathon lifecycle management</Text>
@@ -167,14 +168,16 @@ const styles = StyleSheet.create({
   logoWrap: { alignItems: 'center', marginBottom: 28 },
   logoBox: {
     alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 20,
-    height: 72,
+    backgroundColor: '#000',
+    borderRadius: 24,
+    height: 96,
     justifyContent: 'center',
     marginBottom: 14,
-    width: 72,
+    overflow: 'hidden',
+    width: 96,
     ...Shadow.lg,
   },
+  logoImage: { height: 96, transform: [{ scale: 1.45 }], width: 96 },
   title: { color: Colors.textPrimary, fontSize: 24, fontWeight: '800', textAlign: 'center' },
   subtitle: { color: Colors.textSecondary, fontSize: 13, marginTop: 4, textAlign: 'center' },
   card: {

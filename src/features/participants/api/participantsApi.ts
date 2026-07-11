@@ -14,6 +14,8 @@ export const participantsApi = {
 
   getById: (id: string) => api.get<Participant>(`/participants/${id}`),
 
+  getMine: (eventId: string) => api.get<Participant>('/participants/me', { params: { eventId } }),
+
   register: (data: CreateParticipantRequest) => api.post<Participant>('/participants', data),
 
   update: (id: string, data: UpdateParticipantRequest) => api.patch<Participant>(`/participants/${id}`, data),
