@@ -205,30 +205,18 @@ export function TeamChatScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-      <View style={styles.headerCard}>
-        <Text style={styles.headerTitle}>{team?.name || route.params.teamName || 'Team chat'}</Text>
-        <Text style={styles.headerSubtitle}>{team?.projectName || 'Shared team conversation with assigned mentors'}</Text>
-        <View style={styles.mentorRow}>
-          <Text style={styles.mentorHeading}>Assigned mentors</Text>
-          {team?.assignedMentors && team.assignedMentors.length > 0 ? (
-            <View style={styles.mentorPills}>
-              {team.assignedMentors.map((mentor) => (
-                <View key={mentor.id} style={styles.mentorPill}>
-                  <Text style={styles.mentorPillText}>{mentor.fullName || mentor.email}</Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.mentorEmpty}>No mentors assigned yet.</Text>
-          )}
+      {!!team?.assignedMentors?.length && (
+        <View style={styles.mentorBar}>
+          <Text style={styles.mentorLabel}>Mentor</Text>
+          <View style={styles.mentorPills}>
+            {team.assignedMentors.map((mentor) => (
+              <View key={mentor.id} style={styles.mentorPill}>
+                <Text style={styles.mentorPillText}>{mentor.fullName || mentor.email}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
-      <View style={styles.statusBar}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusText}>
-          {isConnected ? 'Realtime connected' : 'Disconnected. Messages will use REST fallback.'}
-        </Text>
-      </View>
+      )}
       <FlatList
         ref={listRef}
         contentContainerStyle={styles.messages}
@@ -275,14 +263,15 @@ function MessageBubble({ message, isMine }: { message: ChatMessage; isMine: bool
         </View>
       )}
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
-        <View style={styles.metaRow}>
-          <Text style={[styles.sender, isMine && styles.senderMine]} numberOfLines={1}>{isMine ? 'You' : senderName}</Text>
-          <Text style={[styles.role, isMine && styles.roleMine]}>{message.senderRole.toUpperCase()}</Text>
-        </View>
+        {!isMine && (
+          <View style={styles.metaRow}>
+            <Text style={styles.sender} numberOfLines={1}>{senderName}</Text>
+            <Text style={styles.role}>{message.senderRole.toUpperCase()}</Text>
+          </View>
+        )}
         <Text style={[styles.messageText, isMine && styles.messageTextMine]}>{message.message}</Text>
         <Text style={[styles.messageState, isMine && styles.messageStateMine]}>
           {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          {isMine ? ` · ${message.status === 'failed' ? 'Failed' : message.isSeen ? 'Seen' : message.status === 'sending' ? 'Sending' : 'Sent'}` : ''}
         </Text>
       </View>
     </View>
@@ -293,27 +282,7 @@ const styles = StyleSheet.create({
   container: { backgroundColor: Colors.background, flex: 1 },
   center: { alignItems: 'center', backgroundColor: Colors.background, flex: 1, justifyContent: 'center' },
   muted: { color: Colors.textSecondary, fontSize: 13, marginTop: 10 },
-  headerCard: {
-    backgroundColor: Colors.surface,
-    borderBottomColor: Colors.border,
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  headerTitle: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  headerSubtitle: { color: Colors.textSecondary, fontSize: 12, marginTop: 4 },
-  mentorRow: { marginTop: 10 },
-  mentorHeading: { color: Colors.textPrimary, fontSize: 12, fontWeight: '800', marginBottom: 7 },
-  mentorPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  mentorPill: {
-    backgroundColor: Colors.blue100,
-    borderRadius: Radius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  mentorPillText: { color: Colors.primary, fontSize: 11, fontWeight: '700' },
-  mentorEmpty: { color: Colors.textMuted, fontSize: 12 },
-  statusBar: {
+  mentorBar: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
     borderBottomColor: Colors.border,
@@ -323,8 +292,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
-  statusDot: { backgroundColor: Colors.green, borderRadius: Radius.full, height: 8, width: 8 },
-  statusText: { color: Colors.textSecondary, flex: 1, fontSize: 12, fontWeight: '700' },
+  mentorLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  mentorPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mentorPill: {
+    backgroundColor: Colors.blue100,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  mentorPillText: { color: Colors.primary, fontSize: 11, fontWeight: '700' },
   messages: { flexGrow: 1, padding: 14, paddingBottom: 20 },
   messageRow: { alignItems: 'flex-end', flexDirection: 'row', marginBottom: 12, maxWidth: '88%' },
   messageRowMine: { alignSelf: 'flex-end', justifyContent: 'flex-end' },
@@ -343,9 +319,7 @@ const styles = StyleSheet.create({
   bubbleOther: { backgroundColor: Colors.surface, borderColor: Colors.border, borderWidth: 1 },
   metaRow: { alignItems: 'center', flexDirection: 'row', gap: 7, marginBottom: 4 },
   sender: { color: Colors.textPrimary, flexShrink: 1, fontSize: 12, fontWeight: '800' },
-  senderMine: { color: '#fff' },
   role: { color: Colors.primary, fontSize: 10, fontWeight: '900' },
-  roleMine: { color: Colors.blue100 },
   messageText: { color: Colors.textPrimary, fontSize: 14, lineHeight: 20 },
   messageTextMine: { color: '#fff' },
   messageState: { color: Colors.textMuted, fontSize: 10, marginTop: 5 },

@@ -66,6 +66,8 @@ export function EventDetailScreen({ navigation, route }: Props) {
   if (error) return <ErrorState message={error} onRetry={loadDetail} />;
   if (!event) return <EmptyState title="Event not found" />;
 
+  const canCheckIn = participant?.team?.status === 'CONFIRMED';
+
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
       <View style={styles.hero}>
@@ -84,14 +86,16 @@ export function EventDetailScreen({ navigation, route }: Props) {
       </View>
 
       {participant && (
-        <View style={[styles.checkInCard, participant.checkInStatus === 'CHECKED_IN' && styles.checkInCardDone]}>
-          <CheckCircle2 color={participant.checkInStatus === 'CHECKED_IN' ? Colors.greenDark : Colors.textMuted} size={25} />
+        <View style={[styles.checkInCard, canCheckIn && participant.checkInStatus === 'CHECKED_IN' && styles.checkInCardDone]}>
+          <CheckCircle2 color={canCheckIn && participant.checkInStatus === 'CHECKED_IN' ? Colors.greenDark : Colors.textMuted} size={25} />
           <View style={styles.checkInTextWrap}>
-            <Text style={[styles.checkInTitle, participant.checkInStatus === 'CHECKED_IN' && styles.checkInTitleDone]}>
-              {participant.checkInStatus === 'CHECKED_IN' ? 'Checked in' : 'Not checked in yet'}
+            <Text style={[styles.checkInTitle, canCheckIn && participant.checkInStatus === 'CHECKED_IN' && styles.checkInTitleDone]}>
+              {!canCheckIn ? 'Check-in unavailable' : participant.checkInStatus === 'CHECKED_IN' ? 'Checked in' : 'Not checked in yet'}
             </Text>
             <Text style={styles.checkInSub}>
-              {participant.checkInStatus === 'CHECKED_IN'
+              {!canCheckIn
+                ? 'Your team must be confirmed before you can check in.'
+                : participant.checkInStatus === 'CHECKED_IN'
                 ? 'Your attendance for this event has been confirmed.'
                 : 'Scan the coordinator QR code when check-in opens.'}
             </Text>
@@ -106,7 +110,7 @@ export function EventDetailScreen({ navigation, route }: Props) {
         onPress={() => navigation.navigate('EventRegistration', { eventId })}
       />
 
-      {participant?.checkInStatus !== 'CHECKED_IN' && (
+      {canCheckIn && participant?.checkInStatus !== 'CHECKED_IN' && (
         <SectionAction
           icon={<QrCode color={Colors.primary} size={19} />}
           title="Check in with QR"
