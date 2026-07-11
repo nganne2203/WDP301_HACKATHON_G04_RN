@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
+import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, QrCode, TicketCheck, UsersRound } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
@@ -167,6 +167,11 @@ export function TeamHomeScreen() {
                     icon={<ClipboardCheck color={Colors.primary} size={18} />}
                     label="Attendance"
                     onPress={() => navigation.navigate('AttendanceHistory', { eventId: selectedEvent.id })}
+                  />
+                  <ActionButton
+                    icon={<QrCode color={Colors.primary} size={18} />}
+                    label="Scan QR"
+                    onPress={() => navigation.navigate('QrCheckIn', { eventId: selectedEvent.id, eventTitle: selectedEvent.title })}
                   />
                 </View>
                 {hasPermission('PARTICIPANT_APPROVE') && (

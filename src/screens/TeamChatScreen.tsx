@@ -26,6 +26,8 @@ import { SOCKET_EVENTS } from '../services/socket/socketEvents';
 import { Colors, Radius } from '../theme/colors';
 
 type ChatRoute = RouteProp<RootStackParamList, 'TeamChat'>;
+const EMPTY_MESSAGES: ChatMessage[] = [];
+const EMPTY_TYPING_USERS: ReturnType<typeof useChatStore.getState>['typingUsers'][string] = [];
 
 export function TeamChatScreen() {
   const route = useRoute<ChatRoute>();
@@ -37,7 +39,7 @@ export function TeamChatScreen() {
   const upsertMessage = useChatStore((state) => state.upsertMessage);
   const markMessageFailed = useChatStore((state) => state.markMessageFailed);
   const markRoomSeen = useChatStore((state) => state.markRoomSeen);
-  const typingUsers = useChatStore((state) => state.typingUsers[route.params.teamId] || []);
+  const typingUsers = useChatStore((state) => state.typingUsers[route.params.teamId] || EMPTY_TYPING_USERS);
   const [room, setRoom] = useState<ChatRoom | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   const [draft, setDraft] = useState('');
@@ -47,7 +49,7 @@ export function TeamChatScreen() {
   const stopTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const messages = useChatStore((state) => (room?.id ? state.messages[room.id] || [] : []));
+  const messages = useChatStore((state) => (room?.id ? state.messages[room.id] || EMPTY_MESSAGES : EMPTY_MESSAGES));
   const visibleTypingUsers = useMemo(() => typingUsers.filter((typingUser) => typingUser.userId !== user?.id), [typingUsers, user?.id]);
 
   const loadRoom = useCallback(async () => {

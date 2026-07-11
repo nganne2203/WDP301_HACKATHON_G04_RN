@@ -32,6 +32,7 @@ import { CreateTeamScreen } from '../screens/CreateTeamScreen';
 import { InviteMembersScreen } from '../screens/InviteMembersScreen';
 import { InvitationDecisionScreen } from '../screens/InvitationDecisionScreen';
 import { CheckInScreen } from '../screens/CheckInScreen';
+import { QrCheckInScreen } from '../screens/QrCheckInScreen';
 import { AttendanceHistoryScreen } from '../screens/AttendanceHistoryScreen';
 import { SubmissionsScreen } from '../screens/SubmissionsScreen';
 import { SubmissionEditorScreen } from '../screens/SubmissionEditorScreen';
@@ -76,6 +77,7 @@ export type RootStackParamList = {
   InviteMembers: { teamId: string; eventId: string };
   InvitationDecision: undefined;
   CheckIn: { eventId: string };
+  QrCheckIn: { eventId: string; eventTitle?: string };
   AttendanceHistory: { eventId: string };
   Submissions: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
   SubmissionEditor: { eventId: string; teamId: string; roundId?: string; submissionId?: string };
@@ -168,6 +170,7 @@ function AppStack() {
       <RootStack.Screen name="InviteMembers" component={InviteMembersScreen} options={{ title: 'Invitations' }} />
       <RootStack.Screen name="InvitationDecision" component={InvitationDecisionScreen} options={{ title: 'Join Team' }} />
       <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Check-in' }} />
+      <RootStack.Screen name="QrCheckIn" component={QrCheckInScreen} options={{ title: 'Scan check-in QR' }} />
       <RootStack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: 'Attendance' }} />
       <RootStack.Screen name="Submissions" component={SubmissionsScreen} options={{ title: 'Submissions' }} />
       <RootStack.Screen name="SubmissionEditor" component={SubmissionEditorScreen} options={{ title: 'Submission' }} />
