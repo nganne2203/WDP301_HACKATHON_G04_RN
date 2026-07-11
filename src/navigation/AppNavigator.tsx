@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ClipboardList,
   Images,
+  MessageCircle,
   Presentation,
   Scale,
   Trophy,
@@ -24,11 +25,14 @@ import { WorkshopDetailScreen } from '../screens/WorkshopDetailScreen';
 import { NotificationCenterScreen } from '../screens/NotificationCenterScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { TeamHomeScreen } from '../screens/TeamHomeScreen';
+import { ChatRoomsScreen } from '../screens/ChatRoomsScreen';
+import { TeamChatScreen } from '../screens/TeamChatScreen';
 import { EventRegistrationScreen } from '../screens/EventRegistrationScreen';
 import { CreateTeamScreen } from '../screens/CreateTeamScreen';
 import { InviteMembersScreen } from '../screens/InviteMembersScreen';
 import { InvitationDecisionScreen } from '../screens/InvitationDecisionScreen';
 import { CheckInScreen } from '../screens/CheckInScreen';
+import { QrCheckInScreen } from '../screens/QrCheckInScreen';
 import { AttendanceHistoryScreen } from '../screens/AttendanceHistoryScreen';
 import { SubmissionsScreen } from '../screens/SubmissionsScreen';
 import { SubmissionEditorScreen } from '../screens/SubmissionEditorScreen';
@@ -54,6 +58,7 @@ export type MainTabParamList = {
   Events: undefined;
   Workshops: undefined;
   Team: undefined;
+  Chats: undefined;
   Media: undefined;
   Judging: undefined;
   Results: undefined;
@@ -72,6 +77,7 @@ export type RootStackParamList = {
   InviteMembers: { teamId: string; eventId: string };
   InvitationDecision: undefined;
   CheckIn: { eventId: string };
+  QrCheckIn: { eventId: string; eventTitle?: string };
   AttendanceHistory: { eventId: string };
   Submissions: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
   SubmissionEditor: { eventId: string; teamId: string; roundId?: string; submissionId?: string };
@@ -80,6 +86,8 @@ export type RootStackParamList = {
   AiReviewDetail: { reviewId: string };
   MediaUpload: { eventId: string };
   MediaDetail: { media: MediaItem };
+  ChatRooms: undefined;
+  TeamChat: { chatRoomId?: string; teamId: string; teamName?: string };
   ScoreSheet: {
     eventId: string;
     roundId: string;
@@ -127,6 +135,7 @@ function MainTabs() {
           if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
+          if (route.name === 'Chats') return <MessageCircle color={color} size={20} />;
           if (route.name === 'Media') return <Images color={color} size={20} />;
           if (route.name === 'Judging') return <Scale color={color} size={20} />;
           if (route.name === 'Results') return <Trophy color={color} size={20} />;
@@ -138,6 +147,7 @@ function MainTabs() {
       <Tab.Screen name="Events" component={EventListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
+      <Tab.Screen name="Chats" component={ChatRoomsScreen} />
       {canUseMedia && <Tab.Screen name="Media" component={MediaHomeScreen} />}
       {canScore && <Tab.Screen name="Judging" component={JudgeWorkspaceScreen} />}
       {canViewResults && <Tab.Screen name="Results" component={ResultsScreen} />}
@@ -160,6 +170,7 @@ function AppStack() {
       <RootStack.Screen name="InviteMembers" component={InviteMembersScreen} options={{ title: 'Invitations' }} />
       <RootStack.Screen name="InvitationDecision" component={InvitationDecisionScreen} options={{ title: 'Join Team' }} />
       <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Check-in' }} />
+      <RootStack.Screen name="QrCheckIn" component={QrCheckInScreen} options={{ title: 'Scan check-in QR' }} />
       <RootStack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: 'Attendance' }} />
       <RootStack.Screen name="Submissions" component={SubmissionsScreen} options={{ title: 'Submissions' }} />
       <RootStack.Screen name="SubmissionEditor" component={SubmissionEditorScreen} options={{ title: 'Submission' }} />
@@ -168,6 +179,12 @@ function AppStack() {
       <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
       <RootStack.Screen name="MediaUpload" component={MediaUploadScreen} options={{ title: 'Upload Media' }} />
       <RootStack.Screen name="MediaDetail" component={MediaDetailScreen} options={{ title: 'Media Detail' }} />
+      <RootStack.Screen name="ChatRooms" component={ChatRoomsScreen} options={{ title: 'Team Chats' }} />
+      <RootStack.Screen
+        name="TeamChat"
+        component={TeamChatScreen}
+        options={({ route }) => ({ title: route.params.teamName || 'Team Chat' })}
+      />
       <RootStack.Screen name="ScoreSheet" component={ScoreSheetScreen} options={{ title: 'Score Sheet' }} />
     </RootStack.Navigator>
   );
