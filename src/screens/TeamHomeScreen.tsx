@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, QrCode, TicketCheck, UsersRound } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
 import type { Event, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -49,7 +50,7 @@ export function TeamHomeScreen() {
     setError('');
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      const list = filterVisibleEvents(response.data, user);
+      const list = await filterVisibleEvents(response.data, user, participantsApi.getMine);
       setEvents(list);
       setSelectedEventId((current) => {
         if (current && list.some((event) => event.id === current)) return current;

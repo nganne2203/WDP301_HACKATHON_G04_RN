@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CalendarDays, Search } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import type { Event, Pagination } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
@@ -32,7 +33,7 @@ export function EventListScreen() {
 
     try {
       const response = await eventsApi.list({ page: 1, limit: 20 });
-      const visibleEvents = filterVisibleEvents(response.data, user);
+      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
       setEvents(visibleEvents);
       setPagination(response.pagination ? { ...response.pagination, totalItems: visibleEvents.length, totalPages: 1 } : null);
     } catch (loadError) {
