@@ -4,6 +4,7 @@ import { Colors, Radius } from '../../theme/colors';
 const toneMap: Record<string, { bg: string; fg: string }> = {
   DRAFT: { bg: Colors.gray100, fg: Colors.textSecondary },
   OPEN_REGISTRATION: { bg: Colors.blue100, fg: Colors.blue700 },
+  REGISTRATION_CLOSED: { bg: Colors.gray100, fg: Colors.textSecondary },
   ONGOING: { bg: Colors.greenLight, fg: Colors.greenDark },
   SCORING: { bg: '#FEF3C7', fg: '#92400E' },
   COMPLETED: { bg: Colors.greenLight, fg: Colors.greenDark },

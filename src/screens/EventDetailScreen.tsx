@@ -67,6 +67,7 @@ export function EventDetailScreen({ navigation, route }: Props) {
   if (!event) return <EmptyState title="Event not found" />;
 
   const canCheckIn = participant?.team?.status === 'CONFIRMED';
+  const registrationOpen = isRegistrationOpen(event);
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
@@ -97,18 +98,20 @@ export function EventDetailScreen({ navigation, route }: Props) {
                 ? 'Your team must be confirmed before you can check in.'
                 : participant.checkInStatus === 'CHECKED_IN'
                 ? 'Your attendance for this event has been confirmed.'
-                : 'Scan the coordinator QR code when check-in opens.'}
+                : 'Scan the coordinator QR code while the event is ongoing.'}
             </Text>
           </View>
         </View>
       )}
 
-      <SectionAction
-        icon={<TicketCheck color={Colors.primary} size={19} />}
-        title="Participant registration"
-        subtitle="Register yourself for this event"
-        onPress={() => navigation.navigate('EventRegistration', { eventId })}
-      />
+      {!participant && registrationOpen && (
+        <SectionAction
+          icon={<TicketCheck color={Colors.primary} size={19} />}
+          title="Participant registration"
+          subtitle="Register yourself for this event"
+          onPress={() => navigation.navigate('EventRegistration', { eventId })}
+        />
+      )}
 
       {canCheckIn && participant?.checkInStatus !== 'CHECKED_IN' && (
         <SectionAction
@@ -134,6 +137,14 @@ export function EventDetailScreen({ navigation, route }: Props) {
       />
     </ScrollView>
   );
+}
+
+function isRegistrationOpen(event: Event) {
+  const now = Date.now();
+  if (event.status !== 'OPEN_REGISTRATION') return false;
+  if (event.registrationStart && new Date(event.registrationStart).getTime() > now) return false;
+  if (event.registrationEnd && new Date(event.registrationEnd).getTime() < now) return false;
+  return true;
 }
 
 function InfoCard({ label, value }: { label: string; value: string }) {

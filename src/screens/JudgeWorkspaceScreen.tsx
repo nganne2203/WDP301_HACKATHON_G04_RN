@@ -49,7 +49,7 @@ export function JudgeWorkspaceScreen() {
   );
 
   const selectedRound = useMemo(
-    () => rounds.find((round) => round.id === selectedRoundId) || rounds[0] || null,
+    () => rounds.find((round) => round.id === selectedRoundId) || rounds.find((round) => round.status === 'SCORING') || rounds[0] || null,
     [rounds, selectedRoundId]
   );
 
@@ -109,7 +109,7 @@ export function JudgeWorkspaceScreen() {
       setRounds(roundResponse.data);
       setSelectedRoundId((current) => {
         if (current && roundResponse.data.some((round) => round.id === current)) return current;
-        return roundResponse.data[0]?.id || '';
+        return roundResponse.data.find((round) => round.status === 'SCORING')?.id || roundResponse.data[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -126,20 +126,30 @@ export function JudgeWorkspaceScreen() {
 
     setError('');
     try {
-      const [boardResponse, submissionResponse, sheetResponse] = await Promise.all([
-        judgingBoardsApi.list({ roundId: round.id, limit: 50 }),
-        submissionsApi.list({ roundId: round.id, status: 'SUBMITTED', limit: 100 }),
+      const boardResponse = await judgingBoardsApi.list({ roundId: round.id, limit: 50 });
+      setBoards(boardResponse.data);
+
+      const boardOpen = boardResponse.data.some(
+        (board) => board.status === 'SCORING' && (board.judgeIds.includes(user?.id || '') || hasPermission('JUDGING_ASSIGN'))
+      );
+      if (round.status !== 'SCORING' || !boardOpen) {
+        setSubmissions([]);
+        setScoreSheets([]);
+        return;
+      }
+
+      const [submissionResponse, sheetResponse] = await Promise.all([
+        submissionsApi.list({ roundId: round.id, limit: 100 }),
         user?.id
           ? scoringApi.listSheets({ roundId: round.id, judgeId: user.id, limit: 100 })
           : Promise.resolve({ data: [], pagination: null }),
       ]);
-      setBoards(boardResponse.data);
-      setSubmissions(submissionResponse.data);
+      setSubmissions(submissionResponse.data.filter((submission) => submission.status === 'SUBMITTED' || submission.status === 'ACCEPTED'));
       setScoreSheets(sheetResponse.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
     }
-  }, [user?.id]);
+  }, [hasPermission, user?.id]);
 
   useEffect(() => {
     loadEvents();
@@ -158,6 +168,8 @@ export function JudgeWorkspaceScreen() {
     if (selectedEvent?.id) loadRoundContext(selectedEvent.id);
     if (selectedRound) loadScoringContext(selectedRound);
   }
+
+  const scoringOpen = selectedRound?.status === 'SCORING' && (!myBoard || myBoard.status === 'SCORING');
 
   if (loading) {
     return (
@@ -214,6 +226,9 @@ export function JudgeWorkspaceScreen() {
             )}
 
             {myBoard && <Text style={styles.sectionLabel}>Assigned teams</Text>}
+            {myBoard && !scoringOpen && (
+              <Text style={styles.emptyInline}>Scoring opens after this round and your judging board is moved to SCORING.</Text>
+            )}
             {refreshing && <ActivityIndicator color={Colors.primary} />}
           </>
         )}
@@ -236,6 +251,7 @@ export function JudgeWorkspaceScreen() {
               scoreSheetId: scoreSheetByTeam[item.id]?.id,
               repositoryId: submissionByTeam[item.id]?.repositoryId || undefined,
             })}
+            disabled={!scoringOpen || !submissionByTeam[item.id]}
           />
         )}
       />
@@ -283,14 +299,16 @@ function AssignedTeamCard({
   scoreSheet,
   submission,
   team,
+  disabled,
 }: {
   onPress: () => void;
   scoreSheet?: ScoreSheet;
   submission?: Submission;
   team: JudgingBoardTeam;
+  disabled?: boolean;
 }) {
   return (
-    <TouchableOpacity style={styles.teamCard} onPress={onPress} activeOpacity={0.86}>
+    <TouchableOpacity disabled={disabled} style={[styles.teamCard, disabled && styles.disabledCard]} onPress={onPress} activeOpacity={0.86}>
       <View style={styles.cardTop}>
         <View style={styles.flex}>
           <Text style={styles.teamName}>{team.name}</Text>
@@ -306,7 +324,7 @@ function AssignedTeamCard({
 
       <View style={styles.cardAction}>
         <FileText color={Colors.primary} size={17} />
-        <Text style={styles.actionLabel}>{submission ? 'Open score sheet' : 'Review team'}</Text>
+        <Text style={styles.actionLabel}>{disabled ? 'Scoring unavailable' : submission ? 'Open score sheet' : 'Review team'}</Text>
         <ClipboardCheck color={Colors.textMuted} size={17} />
       </View>
     </TouchableOpacity>
@@ -380,6 +398,7 @@ const styles = StyleSheet.create({
     padding: 15,
     ...Shadow.sm,
   },
+  disabledCard: { opacity: 0.65 },
   cardTop: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, justifyContent: 'space-between' },
   teamName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '800' },
   teamSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },

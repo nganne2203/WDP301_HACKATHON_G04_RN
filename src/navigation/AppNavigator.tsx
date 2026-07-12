@@ -120,7 +120,7 @@ function AuthNavigator() {
 
 function MainTabs() {
   const { hasPermission } = useAuth();
-  const canScore = hasPermission('SCORE_VIEW') || hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
+  const canScore = hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
   const canViewResults = hasPermission('SCORE_VIEW') || hasPermission('RESULT_PUBLISH');
   const canUseMedia = hasPermission('EVENT_VIEW') || hasPermission('EVENT_UPDATE');
 

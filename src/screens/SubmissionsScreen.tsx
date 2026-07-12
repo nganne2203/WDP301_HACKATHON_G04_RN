@@ -119,7 +119,14 @@ function RoundSubmissionCard({
   submission?: Submission;
 }) {
   const deadline = round.submissionDeadline || round.endTime;
-  const action = submission?.status === 'DRAFT' ? 'Edit draft' : submission ? 'View submission' : 'Start draft';
+  const accepting = isRoundAcceptingSubmissions(round);
+  const action = submission?.status === 'DRAFT' && accepting
+    ? 'Edit draft'
+    : submission
+      ? 'View submission'
+      : accepting
+        ? 'Start draft'
+        : 'View round';
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.86}>
@@ -154,6 +161,13 @@ function RoundSubmissionCard({
       </View>
     </TouchableOpacity>
   );
+}
+
+function isRoundAcceptingSubmissions(round: Round) {
+  if (round.status !== 'OPEN') return false;
+  if (!round.submissionDeadline) return true;
+  const deadline = new Date(round.submissionDeadline).getTime();
+  return Number.isNaN(deadline) || deadline >= Date.now();
 }
 
 function Info({ label, value }: { label: string; value: string }) {

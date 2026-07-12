@@ -96,6 +96,7 @@ export interface UpdateProfileRequest {
 export type EventStatus =
   | 'DRAFT'
   | 'OPEN_REGISTRATION'
+  | 'REGISTRATION_CLOSED'
   | 'ONGOING'
   | 'SCORING'
   | 'COMPLETED'
