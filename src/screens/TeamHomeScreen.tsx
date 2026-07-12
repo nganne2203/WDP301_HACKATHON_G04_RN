@@ -11,14 +11,16 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, TicketCheck, UsersRound } from 'lucide-react-native';
+import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, QrCode, TicketCheck, UsersRound } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
 import type { Event, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange, initials } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -48,7 +50,7 @@ export function TeamHomeScreen() {
     setError('');
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      const list = response.data;
+      const list = await filterVisibleEvents(response.data, user, participantsApi.getMine);
       setEvents(list);
       setSelectedEventId((current) => {
         if (current && list.some((event) => event.id === current)) return current;
@@ -60,7 +62,7 @@ export function TeamHomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   const loadTeam = useCallback(async (eventId: string) => {
     if (!eventId) {
@@ -167,6 +169,11 @@ export function TeamHomeScreen() {
                     icon={<ClipboardCheck color={Colors.primary} size={18} />}
                     label="Attendance"
                     onPress={() => navigation.navigate('AttendanceHistory', { eventId: selectedEvent.id })}
+                  />
+                  <ActionButton
+                    icon={<QrCode color={Colors.primary} size={18} />}
+                    label="Scan QR"
+                    onPress={() => navigation.navigate('QrCheckIn', { eventId: selectedEvent.id, eventTitle: selectedEvent.title })}
                   />
                 </View>
                 {hasPermission('PARTICIPANT_APPROVE') && (
@@ -281,6 +288,20 @@ function TeamSummary({ canInvite, onInvite, team }: { canInvite: boolean; onInvi
         <Stat label="Invites" value={String(team.invitations.filter((invite) => invite.status === 'PENDING').length)} />
         <Stat label="Required" value={String(team.event?.minTeamMembers || 3)} />
       </View>
+      <View style={styles.mentorSection}>
+        <Text style={styles.mentorLabel}>Assigned mentors</Text>
+        {team.assignedMentors && team.assignedMentors.length > 0 ? (
+          <View style={styles.mentorChips}>
+            {team.assignedMentors.map((mentor) => (
+              <View key={mentor.id} style={styles.mentorChip}>
+                <Text style={styles.mentorChipText}>{mentor.fullName || mentor.email}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.mentorEmpty}>No mentors assigned yet.</Text>
+        )}
+      </View>
       {canInvite && (
         <TouchableOpacity style={styles.outlineButton} onPress={onInvite}>
           <MailPlus color={Colors.primary} size={17} />
@@ -373,6 +394,17 @@ const styles = StyleSheet.create({
     padding: 16,
     ...Shadow.sm,
   },
+  mentorSection: { marginTop: 14 },
+  mentorLabel: { color: Colors.textPrimary, fontSize: 13, fontWeight: '800', marginBottom: 8 },
+  mentorChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mentorChip: {
+    backgroundColor: Colors.blue100,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  mentorChipText: { color: Colors.primary, fontSize: 12, fontWeight: '700' },
+  mentorEmpty: { color: Colors.textMuted, fontSize: 12 },
   flex: { flex: 1 },
   teamName: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
   rejection: {

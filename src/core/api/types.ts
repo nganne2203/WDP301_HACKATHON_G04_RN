@@ -568,6 +568,8 @@ export interface Team {
   leader: TeamUserSummary | null;
   leaderId: string;
   members: TeamUserSummary[];
+  assignedMentors?: TeamUserSummary[];
+  mentorIds?: string[];
   name: string;
   chapterName?: string | null;
   projectName?: string | null;
@@ -610,6 +612,10 @@ export interface InviteMembersRequest {
 export interface InviteMembersResult {
   total: number;
   invitations: TeamInvitation[];
+}
+
+export interface UpdateTeamMentorsRequest {
+  mentorIds: string[];
 }
 
 export interface ReplaceInvitationRequest {

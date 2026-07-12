@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Award, Medal, RefreshCw, Send } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { finalistsApi } from '../features/finalists/api/finalistsApi';
 import { rankingsApi } from '../features/rankings/api/rankingsApi';
 import { resultsApi } from '../features/results/api/resultsApi';
@@ -19,6 +20,7 @@ import { roundsApi } from '../features/rounds/api/roundsApi';
 import type { Event, Ranking, RepositoryAccessAction, Round } from '../core/api/types';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateTime } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -64,10 +66,11 @@ export function ResultsScreen() {
 
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      setEvents(response.data);
+      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
+      setEvents(visibleEvents);
       setSelectedEventId((current) => {
-        if (current && response.data.some((event) => event.id === current)) return current;
-        return response.data[0]?.id || '';
+        if (current && visibleEvents.some((event) => event.id === current)) return current;
+        return visibleEvents[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -75,7 +78,7 @@ export function ResultsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   const loadRounds = useCallback(async (eventId: string) => {
     if (!eventId) {

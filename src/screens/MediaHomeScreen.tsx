@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Images, Upload } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { MediaCard } from '../features/media/components/MediaCard';
 import { MediaStatsGrid } from '../features/media/components/MediaStatsGrid';
 import { MediaTypeFilter } from '../features/media/components/MediaTypeFilter';
@@ -21,6 +22,7 @@ import type { Event, MediaItem, MediaStatus, MediaType } from '../core/api/types
 import { useAuth } from '../core/session/AuthContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { Colors, Radius, Shadow } from '../theme/colors';
@@ -57,10 +59,16 @@ export function MediaHomeScreen() {
     setError('');
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      setEvents(response.data);
+      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
+      setEvents(visibleEvents);
+      if (visibleEvents.length === 0) {
+        setGalleryItems([]);
+        setGalleryStats({ totalUploads: 0, totalImages: 0, totalVideos: 0, totalDocuments: 0 });
+        setHistoryItems([]);
+      }
       setSelectedEventId((current) => {
-        if (current && response.data.some((event) => event.id === current)) return current;
-        return response.data[0]?.id || '';
+        if (current && visibleEvents.some((event) => event.id === current)) return current;
+        return visibleEvents[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -68,7 +76,7 @@ export function MediaHomeScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   const loadMedia = useCallback(async () => {
     if (!selectedEvent?.id) return;

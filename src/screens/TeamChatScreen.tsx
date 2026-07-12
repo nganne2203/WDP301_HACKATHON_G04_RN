@@ -14,9 +14,10 @@ import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { SendHorizontal } from 'lucide-react-native';
 import { chatApi } from '../features/chat/api/chatApi';
+import { teamsApi } from '../features/teams/api/teamsApi';
 import { useChatStore } from '../features/chat/model/chatStore';
 import { useAuth } from '../core/session/AuthContext';
-import type { ChatMessage, ChatRoom } from '../core/api/types';
+import type { ChatMessage, ChatRoom, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, initials } from '../core/utils/format';
 import { EmptyState, ErrorState } from '../shared/ui/ScreenState';
@@ -25,6 +26,8 @@ import { SOCKET_EVENTS } from '../services/socket/socketEvents';
 import { Colors, Radius } from '../theme/colors';
 
 type ChatRoute = RouteProp<RootStackParamList, 'TeamChat'>;
+const EMPTY_MESSAGES: ChatMessage[] = [];
+const EMPTY_TYPING_USERS: ReturnType<typeof useChatStore.getState>['typingUsers'][string] = [];
 
 export function TeamChatScreen() {
   const route = useRoute<ChatRoute>();
@@ -36,8 +39,9 @@ export function TeamChatScreen() {
   const upsertMessage = useChatStore((state) => state.upsertMessage);
   const markMessageFailed = useChatStore((state) => state.markMessageFailed);
   const markRoomSeen = useChatStore((state) => state.markRoomSeen);
-  const typingUsers = useChatStore((state) => state.typingUsers[route.params.teamId] || []);
+  const typingUsers = useChatStore((state) => state.typingUsers[route.params.teamId] || EMPTY_TYPING_USERS);
   const [room, setRoom] = useState<ChatRoom | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -45,7 +49,7 @@ export function TeamChatScreen() {
   const stopTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const messages = useChatStore((state) => (room?.id ? state.messages[room.id] || [] : []));
+  const messages = useChatStore((state) => (room?.id ? state.messages[room.id] || EMPTY_MESSAGES : EMPTY_MESSAGES));
   const visibleTypingUsers = useMemo(() => typingUsers.filter((typingUser) => typingUser.userId !== user?.id), [typingUsers, user?.id]);
 
   const loadRoom = useCallback(async () => {
@@ -63,6 +67,9 @@ export function TeamChatScreen() {
 
       setRoom(activeRoom);
       upsertRoom(activeRoom);
+
+      const teamResponse = await teamsApi.getById(activeRoom.teamId);
+      setTeam(teamResponse.data);
 
       const messagesResponse = await chatApi.listMessages(activeRoom.id, { limit: 80 });
       setMessages(activeRoom.id, messagesResponse.data);
@@ -198,12 +205,18 @@ export function TeamChatScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-      <View style={styles.statusBar}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusText}>
-          {isConnected ? 'Realtime connected' : 'Disconnected. Messages will use REST fallback.'}
-        </Text>
-      </View>
+      {!!team?.assignedMentors?.length && (
+        <View style={styles.mentorBar}>
+          <Text style={styles.mentorLabel}>Mentor</Text>
+          <View style={styles.mentorPills}>
+            {team.assignedMentors.map((mentor) => (
+              <View key={mentor.id} style={styles.mentorPill}>
+                <Text style={styles.mentorPillText}>{mentor.fullName || mentor.email}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
       <FlatList
         ref={listRef}
         contentContainerStyle={styles.messages}
@@ -250,14 +263,15 @@ function MessageBubble({ message, isMine }: { message: ChatMessage; isMine: bool
         </View>
       )}
       <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleOther]}>
-        <View style={styles.metaRow}>
-          <Text style={[styles.sender, isMine && styles.senderMine]} numberOfLines={1}>{isMine ? 'You' : senderName}</Text>
-          <Text style={[styles.role, isMine && styles.roleMine]}>{message.senderRole.toUpperCase()}</Text>
-        </View>
+        {!isMine && (
+          <View style={styles.metaRow}>
+            <Text style={styles.sender} numberOfLines={1}>{senderName}</Text>
+            <Text style={styles.role}>{message.senderRole.toUpperCase()}</Text>
+          </View>
+        )}
         <Text style={[styles.messageText, isMine && styles.messageTextMine]}>{message.message}</Text>
         <Text style={[styles.messageState, isMine && styles.messageStateMine]}>
           {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          {isMine ? ` · ${message.status === 'failed' ? 'Failed' : message.isSeen ? 'Seen' : message.status === 'sending' ? 'Sending' : 'Sent'}` : ''}
         </Text>
       </View>
     </View>
@@ -268,7 +282,7 @@ const styles = StyleSheet.create({
   container: { backgroundColor: Colors.background, flex: 1 },
   center: { alignItems: 'center', backgroundColor: Colors.background, flex: 1, justifyContent: 'center' },
   muted: { color: Colors.textSecondary, fontSize: 13, marginTop: 10 },
-  statusBar: {
+  mentorBar: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
     borderBottomColor: Colors.border,
@@ -278,8 +292,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
-  statusDot: { backgroundColor: Colors.green, borderRadius: Radius.full, height: 8, width: 8 },
-  statusText: { color: Colors.textSecondary, flex: 1, fontSize: 12, fontWeight: '700' },
+  mentorLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  mentorPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mentorPill: {
+    backgroundColor: Colors.blue100,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  mentorPillText: { color: Colors.primary, fontSize: 11, fontWeight: '700' },
   messages: { flexGrow: 1, padding: 14, paddingBottom: 20 },
   messageRow: { alignItems: 'flex-end', flexDirection: 'row', marginBottom: 12, maxWidth: '88%' },
   messageRowMine: { alignSelf: 'flex-end', justifyContent: 'flex-end' },
@@ -298,9 +319,7 @@ const styles = StyleSheet.create({
   bubbleOther: { backgroundColor: Colors.surface, borderColor: Colors.border, borderWidth: 1 },
   metaRow: { alignItems: 'center', flexDirection: 'row', gap: 7, marginBottom: 4 },
   sender: { color: Colors.textPrimary, flexShrink: 1, fontSize: 12, fontWeight: '800' },
-  senderMine: { color: '#fff' },
   role: { color: Colors.primary, fontSize: 10, fontWeight: '900' },
-  roleMine: { color: Colors.blue100 },
   messageText: { color: Colors.textPrimary, fontSize: 14, lineHeight: 20 },
   messageTextMine: { color: '#fff' },
   messageState: { color: Colors.textMuted, fontSize: 10, marginTop: 5 },

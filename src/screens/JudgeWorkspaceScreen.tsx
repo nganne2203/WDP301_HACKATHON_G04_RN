@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ClipboardCheck, FileText, Scale } from 'lucide-react-native';
 import { eventsApi } from '../features/events/api/eventsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { judgingBoardsApi } from '../features/judging/api/judgingBoardsApi';
 import { roundsApi } from '../features/rounds/api/roundsApi';
 import { scoringApi } from '../features/scoring/api/scoringApi';
@@ -20,6 +21,7 @@ import type { Event, JudgingBoard, JudgingBoardTeam, Round, ScoreSheet, Submissi
 import { useAuth } from '../core/session/AuthContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, formatDateTime } from '../core/utils/format';
+import { filterVisibleEvents } from '../core/utils/eventVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -78,10 +80,11 @@ export function JudgeWorkspaceScreen() {
 
     try {
       const response = await eventsApi.list({ page: 1, limit: 50 });
-      setEvents(response.data);
+      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
+      setEvents(visibleEvents);
       setSelectedEventId((current) => {
-        if (current && response.data.some((event) => event.id === current)) return current;
-        return response.data[0]?.id || '';
+        if (current && visibleEvents.some((event) => event.id === current)) return current;
+        return visibleEvents[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -89,7 +92,7 @@ export function JudgeWorkspaceScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   const loadRoundContext = useCallback(async (eventId: string) => {
     if (!eventId) {
