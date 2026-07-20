@@ -18,8 +18,8 @@ import { Colors } from '../theme/colors';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
-import { EventListScreen } from '../screens/EventListScreen';
-import { EventDetailScreen } from '../screens/EventDetailScreen';
+import { CompetitionListScreen } from '../screens/CompetitionListScreen';
+import { CompetitionDetailScreen } from '../screens/CompetitionDetailScreen';
 import { TimelineScreen } from '../screens/TimelineScreen';
 import { WorkshopListScreen } from '../screens/WorkshopListScreen';
 import { WorkshopDetailScreen } from '../screens/WorkshopDetailScreen';
@@ -28,7 +28,7 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { TeamHomeScreen } from '../screens/TeamHomeScreen';
 import { ChatRoomsScreen } from '../screens/ChatRoomsScreen';
 import { TeamChatScreen } from '../screens/TeamChatScreen';
-import { EventRegistrationScreen } from '../screens/EventRegistrationScreen';
+import { CompetitionRegistrationScreen } from '../screens/CompetitionRegistrationScreen';
 import { CreateTeamScreen } from '../screens/CreateTeamScreen';
 import { InviteMembersScreen } from '../screens/InviteMembersScreen';
 import { InvitationDecisionScreen } from '../screens/InvitationDecisionScreen';
@@ -56,7 +56,7 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Events: undefined;
+  Competitions: undefined;
   Workshops: undefined;
   Team: undefined;
   Chats: undefined;
@@ -69,28 +69,28 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
-  EventDetail: { eventId: string };
-  Timeline: { eventId: string; eventTitle?: string };
+  CompetitionDetail: { competitionId: string };
+  Timeline: { competitionId: string; eventTitle?: string };
   WorkshopDetail: { workshopId: string };
-  EventRegistration: { eventId: string };
-  TeamHome: { eventId?: string };
-  CreateTeam: { eventId: string };
-  InviteMembers: { teamId: string; eventId: string };
+  CompetitionRegistration: { competitionId: string };
+  TeamHome: { competitionId?: string };
+  CreateTeam: { competitionId: string };
+  InviteMembers: { teamId: string; competitionId: string };
   InvitationDecision: undefined;
-  CheckIn: { eventId: string };
-  QrCheckIn: { eventId: string; eventTitle?: string };
-  AttendanceHistory: { eventId: string };
-  Submissions: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
-  SubmissionEditor: { eventId: string; teamId: string; roundId?: string; submissionId?: string };
-  RepositoryViewer: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
+  CheckIn: { competitionId: string };
+  QrCheckIn: { competitionId: string; eventTitle?: string };
+  AttendanceHistory: { competitionId: string };
+  Submissions: { competitionId: string; teamId: string; eventTitle?: string; teamName?: string };
+  SubmissionEditor: { competitionId: string; teamId: string; roundId?: string; submissionId?: string };
+  RepositoryViewer: { competitionId: string; teamId: string; eventTitle?: string; teamName?: string };
   RepositoryDetail: { repositoryId: string };
   AiReviewDetail: { reviewId: string };
-  MediaUpload: { eventId: string };
+  MediaUpload: { competitionId: string };
   MediaDetail: { media: MediaItem };
   ChatRooms: undefined;
   TeamChat: { chatRoomId?: string; teamId: string; teamName?: string };
   ScoreSheet: {
-    eventId: string;
+    competitionId: string;
     roundId: string;
     boardId: string;
     teamId: string;
@@ -122,7 +122,7 @@ function MainTabs() {
   const { hasPermission } = useAuth();
   const canScore = hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
   const canViewResults = hasPermission('SCORE_VIEW') || hasPermission('RESULT_PUBLISH');
-  const canUseMedia = hasPermission('EVENT_VIEW') || hasPermission('EVENT_UPDATE');
+  const canUseMedia = hasPermission('COMPETITION_VIEW') || hasPermission('COMPETITION_UPDATE');
 
   return (
     <Tab.Navigator
@@ -134,7 +134,7 @@ function MainTabs() {
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: ({ color }) => {
-          if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
+          if (route.name === 'Competitions') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
           if (route.name === 'Chats') return <MessageCircle color={color} size={20} />;
@@ -146,7 +146,7 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Events" component={EventListScreen} />
+      <Tab.Screen name="Competitions" component={CompetitionListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
       <Tab.Screen name="Chats" component={ChatRoomsScreen} />
@@ -163,10 +163,10 @@ function AppStack() {
   return (
     <RootStack.Navigator>
       <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-      <RootStack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Event Detail' }} />
+      <RootStack.Screen name="CompetitionDetail" component={CompetitionDetailScreen} options={{ title: 'Competition Detail' }} />
       <RootStack.Screen name="Timeline" component={TimelineScreen} options={{ title: 'Timeline' }} />
       <RootStack.Screen name="WorkshopDetail" component={WorkshopDetailScreen} options={{ title: 'Workshop Detail' }} />
-      <RootStack.Screen name="EventRegistration" component={EventRegistrationScreen} options={{ title: 'Register' }} />
+      <RootStack.Screen name="CompetitionRegistration" component={CompetitionRegistrationScreen} options={{ title: 'Register' }} />
       <RootStack.Screen name="TeamHome" component={TeamHomeScreen} options={{ title: 'Team' }} />
       <RootStack.Screen name="CreateTeam" component={CreateTeamScreen} options={{ title: 'Create Team' }} />
       <RootStack.Screen name="InviteMembers" component={InviteMembersScreen} options={{ title: 'Invitations' }} />

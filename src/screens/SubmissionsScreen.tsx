@@ -21,7 +21,7 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'Submissions'>;
 
 export function SubmissionsScreen({ navigation, route }: Props) {
-  const { eventId, teamId, eventTitle, teamName } = route.params;
+  const { competitionId, teamId, eventTitle, teamName } = route.params;
   const [rounds, setRounds] = useState<Round[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,8 +42,8 @@ export function SubmissionsScreen({ navigation, route }: Props) {
 
     try {
       const [roundResponse, submissionResponse] = await Promise.all([
-        roundsApi.list({ eventId, limit: 50 }),
-        submissionsApi.list({ eventId, teamId, limit: 50 }),
+        roundsApi.list({ competitionId, limit: 50 }),
+        submissionsApi.list({ competitionId, teamId, limit: 50 }),
       ]);
       setRounds(roundResponse.data);
       setSubmissions(submissionResponse.data);
@@ -53,7 +53,7 @@ export function SubmissionsScreen({ navigation, route }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [eventId, teamId]);
+  }, [competitionId, teamId]);
 
   useEffect(() => {
     loadData();
@@ -75,11 +75,11 @@ export function SubmissionsScreen({ navigation, route }: Props) {
             <Upload color={Colors.primary} size={24} />
           </View>
           <Text style={styles.title}>Submissions</Text>
-          <Text style={styles.subtitle}>{teamName || 'Your team'} - {eventTitle || 'Selected event'}</Text>
+          <Text style={styles.subtitle}>{teamName || 'Your team'} - {eventTitle || 'Selected competition'}</Text>
           <View style={styles.heroActions}>
             <TouchableOpacity
               style={styles.outlineButton}
-              onPress={() => navigation.navigate('RepositoryViewer', { eventId, teamId, eventTitle, teamName })}
+              onPress={() => navigation.navigate('RepositoryViewer', { competitionId, teamId, eventTitle, teamName })}
             >
               <GitBranch color={Colors.primary} size={17} />
               <Text style={styles.outlineText}>Repositories</Text>
@@ -90,7 +90,7 @@ export function SubmissionsScreen({ navigation, route }: Props) {
       ListEmptyComponent={(
         <EmptyState
           title="No rounds yet"
-          message="Submissions open after event rounds are configured."
+          message="Submissions open after competition rounds are configured."
         />
       )}
       renderItem={({ item }) => (
@@ -98,7 +98,7 @@ export function SubmissionsScreen({ navigation, route }: Props) {
           round={item}
           submission={submissionsByRound[item.id]}
           onPress={() => navigation.navigate('SubmissionEditor', {
-            eventId,
+            competitionId,
             teamId,
             roundId: item.id,
             submissionId: submissionsByRound[item.id]?.id,

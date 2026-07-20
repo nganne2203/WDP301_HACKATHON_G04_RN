@@ -1,6 +1,6 @@
 import { mediaApi } from '../api/mediaApi';
 import type {
-  EventGalleryFilter,
+  CompetitionGalleryFilter,
   MediaHistoryFilter,
   UploadMediaRequest,
 } from '../../../core/api/types';
@@ -8,7 +8,7 @@ import type {
 export const mediaRepository = {
   upload: (request: UploadMediaRequest) => mediaApi.upload(request),
   getMyHistory: (filters?: MediaHistoryFilter) => mediaApi.getMyHistory(filters),
-  getEventGallery: (eventId: string, filters?: EventGalleryFilter) => mediaApi.getEventGallery(eventId, filters),
+  getCompetitionGallery: (competitionId: string, filters?: CompetitionGalleryFilter) => mediaApi.getCompetitionGallery(competitionId, filters),
   getViewUrl: (mediaId: string) => mediaApi.getViewUrl(mediaId),
   deleteOwn: (mediaId: string) => mediaApi.delete(mediaId),
 };

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MailPlus, Plus, Trash2, UsersRound } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import {
   createMemberRow,
@@ -19,7 +19,7 @@ import {
   normalizeMemberRows,
   type MemberInviteRow,
 } from '../features/teams/model/teamHelpers';
-import type { Event } from '../core/api/types';
+import type { Competition } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange } from '../core/utils/format';
@@ -30,9 +30,9 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateTeam'>;
 
 export function CreateTeamScreen({ navigation, route }: Props) {
-  const { eventId } = route.params;
+  const { competitionId } = route.params;
   const { user } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
+  const [competition, setCompetition] = useState<Competition | null>(null);
   const [teamName, setTeamName] = useState('');
   const [projectName, setProjectName] = useState('');
   const [chapterName, setChapterName] = useState('');
@@ -42,22 +42,22 @@ export function CreateTeamScreen({ navigation, route }: Props) {
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
 
-  const loadEvent = useCallback(async () => {
+  const loadCompetition = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await eventsApi.getById(eventId);
-      setEvent(response.data);
+      const response = await competitionsApi.getById(competitionId);
+      setCompetition(response.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [competitionId]);
 
   useEffect(() => {
-    loadEvent();
-  }, [loadEvent]);
+    loadCompetition();
+  }, [loadCompetition]);
 
   function updateMember(id: string, patch: Partial<MemberInviteRow>) {
     setMembers((rows) => rows.map((row) => row.id === id ? { ...row, ...patch } : row));
@@ -92,13 +92,13 @@ export function CreateTeamScreen({ navigation, route }: Props) {
     setFormError('');
     try {
       const response = await teamsApi.create({
-        eventId,
+        competitionId,
         name: teamName.trim(),
         projectName: projectName.trim() || null,
         chapterName: chapterName.trim() || null,
         invitedMembers: normalizedMembers,
       });
-      navigation.replace('InviteMembers', { teamId: response.data.id, eventId });
+      navigation.replace('InviteMembers', { teamId: response.data.id, competitionId });
     } catch (submitError) {
       setFormError(errorMessage(submitError));
     } finally {
@@ -106,18 +106,18 @@ export function CreateTeamScreen({ navigation, route }: Props) {
     }
   }
 
-  if (loading) return <LoadingState label="Loading event..." />;
-  if (error) return <ErrorState message={error} onRetry={loadEvent} />;
-  if (!event) return <EmptyState title="Event not found" />;
+  if (loading) return <LoadingState label="Loading competition..." />;
+  if (error) return <ErrorState message={error} onRetry={loadCompetition} />;
+  if (!competition) return <EmptyState title="Competition not found" />;
 
-  const registrationOpen = isRegistrationOpen(event);
+  const registrationOpen = isRegistrationOpen(competition);
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
       <View style={styles.eventCard}>
-        <StatusBadge value={event.status} />
-        <Text style={styles.eventTitle}>{event.title}</Text>
-        <Text style={styles.eventSub}>Registration: {formatDateRange(event.registrationStart, event.registrationEnd)}</Text>
+        <StatusBadge value={competition.status} />
+        <Text style={styles.eventTitle}>{competition.title}</Text>
+        <Text style={styles.eventSub}>Registration: {formatDateRange(competition.registrationStart, competition.registrationEnd)}</Text>
       </View>
 
       <View style={styles.card}>

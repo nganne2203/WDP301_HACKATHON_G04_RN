@@ -44,7 +44,7 @@ export function QrCheckInScreen({ route }: Props) {
       <View style={styles.center}>
         <QrCode color={Colors.primary} size={44} />
         <Text style={styles.title}>Camera access required</Text>
-        <Text style={styles.description}>Allow camera access to scan the QR displayed by the event coordinator.</Text>
+        <Text style={styles.description}>Allow camera access to scan the QR displayed by the competition coordinator.</Text>
         <TouchableOpacity onPress={requestPermission} style={styles.button}><Text style={styles.buttonText}>Allow camera</Text></TouchableOpacity>
       </View>
     );
@@ -60,7 +60,7 @@ export function QrCheckInScreen({ route }: Props) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.overlay}>
-        <Text style={styles.scanTitle}>Place the event QR inside the frame</Text>
+        <Text style={styles.scanTitle}>Place the competition QR inside the frame</Text>
         <View style={styles.frame} />
         {submitting && <ActivityIndicator color="#fff" size="large" />}
         {!!error && <View style={styles.errorCard}><Text style={styles.errorText}>{error}</Text><TouchableOpacity onPress={scanAgain} style={styles.retry}><RotateCcw color="#fff" size={17} /><Text style={styles.buttonText}>Scan again</Text></TouchableOpacity></View>}

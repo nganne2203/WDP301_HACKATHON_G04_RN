@@ -1,4 +1,4 @@
-import type { Event, Team, TeamInviteMember } from '../../../core/api/types';
+import type { Competition, Team, TeamInviteMember } from '../../../core/api/types';
 
 export interface MemberInviteRow {
   id: string;
@@ -16,12 +16,12 @@ export function createMemberRow(): MemberInviteRow {
   };
 }
 
-export function isRegistrationOpen(event?: Event | null) {
-  if (!event || event.status !== 'OPEN_REGISTRATION') return false;
+export function isRegistrationOpen(competition?: Competition | null) {
+  if (!competition || competition.status !== 'OPEN_REGISTRATION') return false;
 
   const now = new Date();
-  if (event.registrationStart && now < new Date(event.registrationStart)) return false;
-  if (event.registrationEnd && now > new Date(event.registrationEnd)) return false;
+  if (competition.registrationStart && now < new Date(competition.registrationStart)) return false;
+  if (competition.registrationEnd && now > new Date(competition.registrationEnd)) return false;
 
   return true;
 }
@@ -55,12 +55,12 @@ export function getTeamMemberCount(team: Team) {
   return team.members.length || team.participants.length;
 }
 
-export function canManageInvitations(team: Team, userId?: string, event?: Event | null) {
+export function canManageInvitations(team: Team, userId?: string, competition?: Competition | null) {
   return Boolean(
     userId &&
     team.leaderId === userId &&
     team.status !== 'REJECTED' &&
-    (!event || isRegistrationOpen(event))
+    (!competition || isRegistrationOpen(competition))
   );
 }
 
