@@ -1113,7 +1113,6 @@ export interface Rubric {
   title: string;
   description: string | null;
   totalScore: number | null;
-  version?: number;
   status?: RubricStatus;
   criteria: Criterion[];
   createdAt: string;
