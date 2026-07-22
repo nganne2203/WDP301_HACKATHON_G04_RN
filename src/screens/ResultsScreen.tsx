@@ -360,7 +360,7 @@ function RankingRow({ finalistView, ranking }: { finalistView: boolean; ranking:
       <View style={styles.statRow}>
         <Stat label="Score" value={formatNumber(ranking.score)} />
         <Stat label="Delta" value={formatNumber(ranking.pointDelta)} />
-        <Stat label="Tie break" value={ranking.tieBreakMethod.replaceAll('_', ' ')} />
+        <Stat label="Tie break" value={formatTieBreakMethod(ranking.tieBreakMethod)} />
       </View>
       <Text style={styles.rankSub}>
         {ranking.publishedAt ? `Published ${formatDateTime(ranking.publishedAt)}` : `Calculated ${formatDateTime(ranking.calculatedAt)}`}
@@ -379,8 +379,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatNumber(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+function formatNumber(value?: number | null) {
+  if (value === undefined || value === null) return '-';
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '-';
+  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(2);
+}
+
+function formatTieBreakMethod(value?: string | null) {
+  return value ? value.replaceAll('_', ' ') : 'NONE';
 }
 
 const styles = StyleSheet.create({
