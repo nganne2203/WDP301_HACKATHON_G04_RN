@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { authApi } from '../../features/auth/api/authApi';
 import { clearTokens, getAccessToken, setTokens } from '../storage/tokenStorage';
 import type { LoginRequest, RegisterRequest, User } from '../api/types';
+import { notificationsApi } from '../../features/notifications/api/notificationsApi';
 
 interface AuthContextValue {
   user: User | null;
@@ -17,6 +18,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const SESSION_BOOTSTRAP_TIMEOUT_MS = 8000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -29,17 +31,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let bootstrapExpired = false;
 
     async function bootstrap() {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
       try {
-        const token = await getAccessToken();
-        if (!token) return;
-        const response = await authApi.getMe();
-        if (mounted) setUserState(response.data);
+        const restoreSession = async () => {
+          const token = await getAccessToken();
+          if (!token) return;
+
+          const response = await authApi.getMe();
+          if (mounted && !bootstrapExpired) setUserState(response.data);
+        };
+
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            bootstrapExpired = true;
+            reject(new Error('Session bootstrap timed out'));
+          }, SESSION_BOOTSTRAP_TIMEOUT_MS);
+        });
+
+        await Promise.race([restoreSession(), timeout]);
       } catch {
-        await clearTokens();
+        // Never keep the app on its loading screen because storage or the API is unavailable.
+        clearTokens().catch(() => undefined);
         if (mounted) setUserState(null);
       } finally {
+        if (timeoutId) clearTimeout(timeoutId);
         if (mounted) setIsBootstrapping(false);
       }
     }
@@ -47,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrap();
     return () => {
       mounted = false;
+      bootstrapExpired = true;
     };
   }, []);
 
@@ -63,7 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      if (await getAccessToken()) await authApi.logout();
+      if (await getAccessToken()) {
+        try {
+          await notificationsApi.unregisterPushToken();
+        } catch {
+          // A stale push token must not prevent the user from logging out locally.
+        }
+        await authApi.logout();
+      }
     } catch {
       // Logging out should always clear local session even if the server is unavailable.
     } finally {

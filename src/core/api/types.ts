@@ -1215,8 +1215,8 @@ export interface Ranking {
   teamId: string | null;
   team: RankingTeamSummary | null;
   score: number;
-  pointDelta: number;
-  tieBreakMethod: TieBreakMethod;
+  pointDelta?: number | null;
+  tieBreakMethod?: TieBreakMethod | null;
   tieBreakScore: number;
   penaltyScore: number;
   miniTestScore: number;
