@@ -4,23 +4,23 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { CalendarClock, CheckCircle2, ChevronRight, Presentation, QrCode, TicketCheck } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { participantsApi } from '../features/participants/api/participantsApi';
 import { timelinesApi } from '../features/timelines/api/timelinesApi';
 import { workshopsApi } from '../features/workshops/api/workshopsApi';
-import type { Event, Participant, TimelineEvent, Workshop } from '../core/api/types';
+import type { Competition, Participant, TimelineActivity, Workshop } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, formatDateRange } from '../core/utils/format';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
 import { Colors, Radius, Shadow } from '../theme/colors';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'CompetitionDetail'>;
 
-export function EventDetailScreen({ navigation, route }: Props) {
-  const { eventId } = route.params;
-  const [event, setEvent] = useState<Event | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+export function CompetitionDetailScreen({ navigation, route }: Props) {
+  const { competitionId } = route.params;
+  const [competition, setCompetition] = useState<Competition | null>(null);
+  const [timeline, setTimeline] = useState<TimelineActivity[]>([]);
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,11 +31,11 @@ export function EventDetailScreen({ navigation, route }: Props) {
     setError('');
     try {
       const [eventResponse, timelineResponse, workshopResponse] = await Promise.all([
-        eventsApi.getById(eventId),
-        timelinesApi.list({ eventId, limit: 5 }),
-        workshopsApi.list({ eventId, limit: 5 }),
+        competitionsApi.getById(competitionId),
+        timelinesApi.list({ competitionId, limit: 5 }),
+        workshopsApi.list({ competitionId, limit: 5 }),
       ]);
-      setEvent(eventResponse.data);
+      setCompetition(eventResponse.data);
       setTimeline(timelineResponse.data);
       setWorkshops(workshopResponse.data);
     } catch (loadError) {
@@ -43,7 +43,7 @@ export function EventDetailScreen({ navigation, route }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [competitionId]);
 
   useEffect(() => {
     loadDetail();
@@ -51,38 +51,39 @@ export function EventDetailScreen({ navigation, route }: Props) {
 
   const loadParticipant = useCallback(async () => {
     try {
-      const response = await participantsApi.getMine(eventId);
+      const response = await participantsApi.getMine(competitionId);
       setParticipant(response.data);
     } catch {
       setParticipant(null);
     }
-  }, [eventId]);
+  }, [competitionId]);
 
   useFocusEffect(useCallback(() => {
     loadParticipant();
   }, [loadParticipant]));
 
-  if (loading) return <LoadingState label="Loading event..." />;
+  if (loading) return <LoadingState label="Loading competition..." />;
   if (error) return <ErrorState message={error} onRetry={loadDetail} />;
-  if (!event) return <EmptyState title="Event not found" />;
+  if (!competition) return <EmptyState title="Competition not found" />;
 
   const canCheckIn = participant?.team?.status === 'CONFIRMED';
+  const registrationOpen = isRegistrationOpen(competition);
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
       <View style={styles.hero}>
-        <StatusBadge value={event.status} />
-        <Text style={styles.title}>{event.title}</Text>
-        {!!event.theme && <Text style={styles.theme}>{event.theme}</Text>}
-        {!!event.description && <Text style={styles.description}>{event.description}</Text>}
+        <StatusBadge value={competition.status} />
+        <Text style={styles.title}>{competition.title}</Text>
+        {!!competition.theme && <Text style={styles.theme}>{competition.theme}</Text>}
+        {!!competition.description && <Text style={styles.description}>{competition.description}</Text>}
       </View>
 
-      <InfoCard label="Event dates" value={formatDateRange(event.startDate, event.endDate)} />
-      <InfoCard label="Registration" value={formatDateRange(event.registrationStart, event.registrationEnd)} />
+      <InfoCard label="Competition dates" value={formatDateRange(competition.startDate, competition.endDate)} />
+      <InfoCard label="Registration" value={formatDateRange(competition.registrationStart, competition.registrationEnd)} />
 
       <View style={styles.grid}>
-        <Stat label="Max teams" value={String(event.maxTeams ?? 'TBA')} />
-        <Stat label="Team size" value={`${event.minTeamMembers ?? '?'}-${event.maxTeamMembers ?? '?'}`} />
+        <Stat label="Max teams" value={String(competition.maxTeams ?? 'TBA')} />
+        <Stat label="Team size" value={`${competition.minTeamMembers ?? '?'}-${competition.maxTeamMembers ?? '?'}`} />
       </View>
 
       {participant && (
@@ -96,26 +97,28 @@ export function EventDetailScreen({ navigation, route }: Props) {
               {!canCheckIn
                 ? 'Your team must be confirmed before you can check in.'
                 : participant.checkInStatus === 'CHECKED_IN'
-                ? 'Your attendance for this event has been confirmed.'
-                : 'Scan the coordinator QR code when check-in opens.'}
+                ? 'Your attendance for this competition has been confirmed.'
+                : 'Scan the coordinator QR code while the competition is ongoing.'}
             </Text>
           </View>
         </View>
       )}
 
-      <SectionAction
-        icon={<TicketCheck color={Colors.primary} size={19} />}
-        title="Participant registration"
-        subtitle="Register yourself for this event"
-        onPress={() => navigation.navigate('EventRegistration', { eventId })}
-      />
+      {!participant && registrationOpen && (
+        <SectionAction
+          icon={<TicketCheck color={Colors.primary} size={19} />}
+          title="Participant registration"
+          subtitle="Register yourself for this competition"
+          onPress={() => navigation.navigate('CompetitionRegistration', { competitionId })}
+        />
+      )}
 
       {canCheckIn && participant?.checkInStatus !== 'CHECKED_IN' && (
         <SectionAction
           icon={<QrCode color={Colors.primary} size={19} />}
           title="Check in with QR"
           subtitle="Scan the QR code displayed by the coordinator"
-          onPress={() => navigation.navigate('QrCheckIn', { eventId, eventTitle: event.title })}
+          onPress={() => navigation.navigate('QrCheckIn', { competitionId, eventTitle: competition.title })}
         />
       )}
 
@@ -123,17 +126,25 @@ export function EventDetailScreen({ navigation, route }: Props) {
         icon={<CalendarClock color={Colors.primary} size={19} />}
         title="Timeline"
         subtitle={`${timeline.length} upcoming or recent items`}
-        onPress={() => navigation.navigate('Timeline', { eventId, eventTitle: event.title })}
+        onPress={() => navigation.navigate('Timeline', { competitionId, eventTitle: competition.title })}
       />
 
       <SectionAction
         icon={<Presentation color={Colors.primary} size={19} />}
         title="Workshops"
-        subtitle={`${workshops.length} workshops linked to this event`}
+        subtitle={`${workshops.length} workshops linked to this competition`}
         onPress={() => navigation.navigate('MainTabs', { screen: 'Workshops' })}
       />
     </ScrollView>
   );
+}
+
+function isRegistrationOpen(competition: Competition) {
+  const now = Date.now();
+  if (competition.status !== 'OPEN_REGISTRATION') return false;
+  if (competition.registrationStart && new Date(competition.registrationStart).getTime() > now) return false;
+  if (competition.registrationEnd && new Date(competition.registrationEnd).getTime() < now) return false;
+  return true;
 }
 
 function InfoCard({ label, value }: { label: string; value: string }) {

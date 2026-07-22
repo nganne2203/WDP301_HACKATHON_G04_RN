@@ -3,7 +3,7 @@ import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Clock3 } from 'lucide-react-native';
 import { timelinesApi } from '../features/timelines/api/timelinesApi';
-import type { TimelineEvent } from '../core/api/types';
+import type { TimelineActivity } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, formatDateTime } from '../core/utils/format';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
@@ -13,8 +13,8 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'Timeline'>;
 
 export function TimelineScreen({ route }: Props) {
-  const { eventId, eventTitle } = route.params;
-  const [items, setItems] = useState<TimelineEvent[]>([]);
+  const { competitionId, eventTitle } = route.params;
+  const [items, setItems] = useState<TimelineActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export function TimelineScreen({ route }: Props) {
     setError('');
 
     try {
-      const response = await timelinesApi.list({ eventId, limit: 50 });
+      const response = await timelinesApi.list({ competitionId, limit: 50 });
       setItems(response.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -33,7 +33,7 @@ export function TimelineScreen({ route }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [eventId]);
+  }, [competitionId]);
 
   useEffect(() => {
     loadItems();
@@ -55,7 +55,7 @@ export function TimelineScreen({ route }: Props) {
             {!!eventTitle && <Text style={styles.headerSub}>{eventTitle}</Text>}
           </View>
         )}
-        ListEmptyComponent={<EmptyState title="No timeline items" message="This event does not have published timeline entries yet." />}
+        ListEmptyComponent={<EmptyState title="No timeline items" message="This competition does not have published timeline entries yet." />}
         renderItem={({ item, index }) => (
           <View style={styles.row}>
             <View style={styles.left}>
@@ -69,7 +69,7 @@ export function TimelineScreen({ route }: Props) {
                 <Text style={styles.title}>{item.title}</Text>
                 <StatusBadge value={item.status} />
               </View>
-              <Text style={styles.type}>{item.eventType.replaceAll('_', ' ')}</Text>
+              <Text style={styles.type}>{item.activityType.replaceAll('_', ' ')}</Text>
               {!!item.description && <Text style={styles.description}>{item.description}</Text>}
               <Text style={styles.time}>{formatDateTime(item.startTime)}</Text>
               {!!item.endTime && <Text style={styles.endTime}>Ends {formatDateTime(item.endTime)}</Text>}

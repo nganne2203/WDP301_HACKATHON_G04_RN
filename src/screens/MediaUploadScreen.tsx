@@ -69,7 +69,7 @@ export function MediaUploadScreen({ navigation, route }: Props) {
     setFormError('');
     try {
       await mediaService.upload({
-        eventId: route.params.eventId,
+        competitionId: route.params.competitionId,
         title,
         description,
         tags,

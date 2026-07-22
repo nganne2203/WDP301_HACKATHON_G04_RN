@@ -3,8 +3,8 @@ import { getAccessToken } from '../../../core/storage/tokenStorage';
 import type {
   ApiErrorResponse,
   ApiSuccessResponse,
-  EventGalleryFilter,
-  EventGalleryResponse,
+  CompetitionGalleryFilter,
+  CompetitionGalleryResponse,
   MediaHistoryFilter,
   MediaItem,
   SignedUrlResponse,
@@ -33,7 +33,7 @@ async function parseUploadError(response: Response) {
 export const mediaApi = {
   upload: async (request: UploadMediaRequest) => {
     const formData = new FormData();
-    formData.append('eventId', request.eventId);
+    formData.append('competitionId', request.competitionId);
     if (request.teamId) formData.append('teamId', request.teamId);
     if (request.title?.trim()) formData.append('title', request.title.trim());
     if (request.description?.trim()) formData.append('description', request.description.trim());
@@ -61,8 +61,8 @@ export const mediaApi = {
   getMyHistory: (filters?: MediaHistoryFilter) =>
     api.get<MediaItem[]>('/media/my-history', { params: toParams(filters) }),
 
-  getEventGallery: (eventId: string, filters?: EventGalleryFilter) =>
-    api.get<EventGalleryResponse>(`/events/${eventId}/gallery`, { params: toParams(filters) }),
+  getCompetitionGallery: (competitionId: string, filters?: CompetitionGalleryFilter) =>
+    api.get<CompetitionGalleryResponse>(`/competitions/${competitionId}/gallery`, { params: toParams(filters) }),
 
   getViewUrl: (mediaId: string) =>
     api.get<SignedUrlResponse>(`/media/${mediaId}/view-url`),

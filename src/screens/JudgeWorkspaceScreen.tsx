@@ -11,17 +11,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ClipboardCheck, FileText, Scale } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { participantsApi } from '../features/participants/api/participantsApi';
 import { judgingBoardsApi } from '../features/judging/api/judgingBoardsApi';
 import { roundsApi } from '../features/rounds/api/roundsApi';
 import { scoringApi } from '../features/scoring/api/scoringApi';
 import { submissionsApi } from '../features/submissions/api/submissionsApi';
-import type { Event, JudgingBoard, JudgingBoardTeam, Round, ScoreSheet, Submission } from '../core/api/types';
+import type { Competition, JudgingBoard, JudgingBoardTeam, Round, ScoreSheet, Submission } from '../core/api/types';
 import { useAuth } from '../core/session/AuthContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, formatDateTime } from '../core/utils/format';
-import { filterVisibleEvents } from '../core/utils/eventVisibility';
+import { filterVisibleCompetitions } from '../core/utils/CompetitionVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -32,24 +32,24 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export function JudgeWorkspaceScreen() {
   const navigation = useNavigation<Navigation>();
   const { user, hasPermission } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [boards, setBoards] = useState<JudgingBoard[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [scoreSheets, setScoreSheets] = useState<ScoreSheet[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
   const [selectedRoundId, setSelectedRoundId] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || events[0] || null,
-    [events, selectedEventId]
+  const selectedCompetition = useMemo(
+    () => competitions.find((competition) => competition.id === selectedCompetitionId) || competitions[0] || null,
+    [competitions, selectedCompetitionId]
   );
 
   const selectedRound = useMemo(
-    () => rounds.find((round) => round.id === selectedRoundId) || rounds[0] || null,
+    () => rounds.find((round) => round.id === selectedRoundId) || rounds.find((round) => round.status === 'SCORING') || rounds[0] || null,
     [rounds, selectedRoundId]
   );
 
@@ -73,18 +73,18 @@ export function JudgeWorkspaceScreen() {
     }, {});
   }, [scoreSheets]);
 
-  const loadEvents = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
+  const loadCompetitions = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
     if (mode === 'refresh') setRefreshing(true);
     else setLoading(true);
     setError('');
 
     try {
-      const response = await eventsApi.list({ page: 1, limit: 50 });
-      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
-      setEvents(visibleEvents);
-      setSelectedEventId((current) => {
-        if (current && visibleEvents.some((event) => event.id === current)) return current;
-        return visibleEvents[0]?.id || '';
+      const response = await competitionsApi.list({ page: 1, limit: 50 });
+      const visibleCompetitions = await filterVisibleCompetitions(response.data, user, participantsApi.getMine);
+      setCompetitions(visibleCompetitions);
+      setSelectedCompetitionId((current) => {
+        if (current && visibleCompetitions.some((competition) => competition.id === current)) return current;
+        return visibleCompetitions[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -94,8 +94,8 @@ export function JudgeWorkspaceScreen() {
     }
   }, [user]);
 
-  const loadRoundContext = useCallback(async (eventId: string) => {
-    if (!eventId) {
+  const loadRoundContext = useCallback(async (competitionId: string) => {
+    if (!competitionId) {
       setRounds([]);
       setBoards([]);
       setSubmissions([]);
@@ -105,11 +105,11 @@ export function JudgeWorkspaceScreen() {
 
     setError('');
     try {
-      const roundResponse = await roundsApi.list({ eventId, limit: 50 });
+      const roundResponse = await roundsApi.list({ competitionId, limit: 50 });
       setRounds(roundResponse.data);
       setSelectedRoundId((current) => {
         if (current && roundResponse.data.some((round) => round.id === current)) return current;
-        return roundResponse.data[0]?.id || '';
+        return roundResponse.data.find((round) => round.status === 'SCORING')?.id || roundResponse.data[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -126,38 +126,50 @@ export function JudgeWorkspaceScreen() {
 
     setError('');
     try {
-      const [boardResponse, submissionResponse, sheetResponse] = await Promise.all([
-        judgingBoardsApi.list({ roundId: round.id, limit: 50 }),
-        submissionsApi.list({ roundId: round.id, status: 'SUBMITTED', limit: 100 }),
+      const boardResponse = await judgingBoardsApi.list({ roundId: round.id, limit: 50 });
+      setBoards(boardResponse.data);
+
+      const boardOpen = boardResponse.data.some(
+        (board) => board.status === 'SCORING' && (board.judgeIds.includes(user?.id || '') || hasPermission('JUDGING_ASSIGN'))
+      );
+      if (round.status !== 'SCORING' || !boardOpen) {
+        setSubmissions([]);
+        setScoreSheets([]);
+        return;
+      }
+
+      const [submissionResponse, sheetResponse] = await Promise.all([
+        submissionsApi.list({ roundId: round.id, limit: 100 }),
         user?.id
           ? scoringApi.listSheets({ roundId: round.id, judgeId: user.id, limit: 100 })
           : Promise.resolve({ data: [], pagination: null }),
       ]);
-      setBoards(boardResponse.data);
-      setSubmissions(submissionResponse.data);
+      setSubmissions(submissionResponse.data.filter((submission) => submission.status === 'SUBMITTED' || submission.status === 'ACCEPTED'));
       setScoreSheets(sheetResponse.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
     }
-  }, [user?.id]);
+  }, [hasPermission, user?.id]);
 
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   useEffect(() => {
-    loadRoundContext(selectedEvent?.id || '');
-  }, [loadRoundContext, selectedEvent?.id]);
+    loadRoundContext(selectedCompetition?.id || '');
+  }, [loadRoundContext, selectedCompetition?.id]);
 
   useEffect(() => {
     loadScoringContext(selectedRound);
   }, [loadScoringContext, selectedRound]);
 
   function refreshAll() {
-    loadEvents('refresh');
-    if (selectedEvent?.id) loadRoundContext(selectedEvent.id);
+    loadCompetitions('refresh');
+    if (selectedCompetition?.id) loadRoundContext(selectedCompetition.id);
     if (selectedRound) loadScoringContext(selectedRound);
   }
+
+  const scoringOpen = selectedRound?.status === 'SCORING' && (!myBoard || myBoard.status === 'SCORING');
 
   if (loading) {
     return (
@@ -172,7 +184,7 @@ export function JudgeWorkspaceScreen() {
     return (
       <View style={styles.container}>
         <Header title="Judging" subtitle="Assigned teams and score sheets" user={user} />
-        <ErrorState message={error} onRetry={() => loadEvents()} />
+        <ErrorState message={error} onRetry={() => loadCompetitions()} />
       </View>
     );
   }
@@ -187,7 +199,7 @@ export function JudgeWorkspaceScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
         ListHeaderComponent={(
           <>
-            <Selector label="Event" items={events} selectedId={selectedEvent?.id || ''} onSelect={setSelectedEventId} />
+            <Selector label="Competition" items={competitions} selectedId={selectedCompetition?.id || ''} onSelect={setSelectedCompetitionId} />
             <Selector label="Round" items={rounds} selectedId={selectedRound?.id || ''} onSelect={setSelectedRoundId} />
 
             {selectedRound ? (
@@ -214,6 +226,9 @@ export function JudgeWorkspaceScreen() {
             )}
 
             {myBoard && <Text style={styles.sectionLabel}>Assigned teams</Text>}
+            {myBoard && !scoringOpen && (
+              <Text style={styles.emptyInline}>Scoring opens after this round and your judging board is moved to SCORING.</Text>
+            )}
             {refreshing && <ActivityIndicator color={Colors.primary} />}
           </>
         )}
@@ -226,7 +241,7 @@ export function JudgeWorkspaceScreen() {
             submission={submissionByTeam[item.id]}
             team={item}
             onPress={() => navigation.navigate('ScoreSheet', {
-              eventId: selectedEvent!.id,
+              competitionId: selectedCompetition!.id,
               roundId: selectedRound!.id,
               boardId: myBoard!.id,
               teamId: item.id,
@@ -236,6 +251,7 @@ export function JudgeWorkspaceScreen() {
               scoreSheetId: scoreSheetByTeam[item.id]?.id,
               repositoryId: submissionByTeam[item.id]?.repositoryId || undefined,
             })}
+            disabled={!scoringOpen || !submissionByTeam[item.id]}
           />
         )}
       />
@@ -283,14 +299,16 @@ function AssignedTeamCard({
   scoreSheet,
   submission,
   team,
+  disabled,
 }: {
   onPress: () => void;
   scoreSheet?: ScoreSheet;
   submission?: Submission;
   team: JudgingBoardTeam;
+  disabled?: boolean;
 }) {
   return (
-    <TouchableOpacity style={styles.teamCard} onPress={onPress} activeOpacity={0.86}>
+    <TouchableOpacity disabled={disabled} style={[styles.teamCard, disabled && styles.disabledCard]} onPress={onPress} activeOpacity={0.86}>
       <View style={styles.cardTop}>
         <View style={styles.flex}>
           <Text style={styles.teamName}>{team.name}</Text>
@@ -306,7 +324,7 @@ function AssignedTeamCard({
 
       <View style={styles.cardAction}>
         <FileText color={Colors.primary} size={17} />
-        <Text style={styles.actionLabel}>{submission ? 'Open score sheet' : 'Review team'}</Text>
+        <Text style={styles.actionLabel}>{disabled ? 'Scoring unavailable' : submission ? 'Open score sheet' : 'Review team'}</Text>
         <ClipboardCheck color={Colors.textMuted} size={17} />
       </View>
     </TouchableOpacity>
@@ -380,6 +398,7 @@ const styles = StyleSheet.create({
     padding: 15,
     ...Shadow.sm,
   },
+  disabledCard: { opacity: 0.65 },
   cardTop: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, justifyContent: 'space-between' },
   teamName: { color: Colors.textPrimary, fontSize: 17, fontWeight: '800' },
   teamSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
