@@ -7,6 +7,9 @@ type ServerToClientEvents = {
   [SOCKET_EVENTS.USER_TYPING]: (payload: unknown) => void;
   [SOCKET_EVENTS.USER_STOP_TYPING]: (payload: unknown) => void;
   [SOCKET_EVENTS.MESSAGE_SEEN]: (payload: unknown) => void;
+  [SOCKET_EVENTS.NOTIFICATION_CREATED]: (payload: unknown) => void;
+  [SOCKET_EVENTS.NOTIFICATION_READ]: (payload: unknown) => void;
+  [SOCKET_EVENTS.NOTIFICATIONS_READ_ALL]: (payload: unknown) => void;
   [SOCKET_EVENTS.ERROR]: (payload: unknown) => void;
 };
 

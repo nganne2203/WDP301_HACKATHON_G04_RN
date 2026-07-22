@@ -9,6 +9,7 @@ import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
 import { Colors, Radius, Shadow } from '../theme/colors';
+import { useNotificationStore } from '../features/notifications/model/notificationStore';
 
 export function NotificationCenterScreen() {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export function NotificationCenterScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [markingAll, setMarkingAll] = useState(false);
+  const refreshRevision = useNotificationStore((state) => state.refreshRevision);
 
   const unreadCount = notifications.filter((item) => item.status === 'UNREAD').length;
 
@@ -38,7 +40,7 @@ export function NotificationCenterScreen() {
 
   useEffect(() => {
     loadNotifications();
-  }, [loadNotifications]);
+  }, [loadNotifications, refreshRevision]);
 
   async function markAsRead(notification: Notification) {
     if (notification.status === 'READ') return;
