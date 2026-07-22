@@ -12,15 +12,15 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ClipboardCheck, FileText, GitBranch, MailPlus, MessageCircle, Plus, QrCode, TicketCheck, UsersRound } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import { participantsApi } from '../features/participants/api/participantsApi';
 import { canManageInvitations, getTeamMemberCount, isRegistrationOpen } from '../features/teams/model/teamHelpers';
-import type { Event, Team } from '../core/api/types';
+import type { Competition, Team } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange, initials } from '../core/utils/format';
-import { filterVisibleEvents } from '../core/utils/eventVisibility';
+import { filterVisibleCompetitions } from '../core/utils/CompetitionVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -31,8 +31,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export function TeamHomeScreen() {
   const navigation = useNavigation<Navigation>();
   const { user, hasPermission } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,20 +40,20 @@ export function TeamHomeScreen() {
   const [error, setError] = useState('');
   const [teamError, setTeamError] = useState('');
 
-  const selectedEvent = useMemo(() => {
-    return events.find((event) => event.id === selectedEventId) || null;
-  }, [events, selectedEventId]);
+  const selectedCompetition = useMemo(() => {
+    return competitions.find((competition) => competition.id === selectedCompetitionId) || null;
+  }, [competitions, selectedCompetitionId]);
 
-  const loadEvents = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
+  const loadCompetitions = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
     if (mode === 'refresh') setRefreshing(true);
     else setLoading(true);
     setError('');
     try {
-      const response = await eventsApi.list({ page: 1, limit: 50 });
-      const list = await filterVisibleEvents(response.data, user, participantsApi.getMine);
-      setEvents(list);
-      setSelectedEventId((current) => {
-        if (current && list.some((event) => event.id === current)) return current;
+      const response = await competitionsApi.list({ page: 1, limit: 50 });
+      const list = await filterVisibleCompetitions(response.data, user, participantsApi.getMine);
+      setCompetitions(list);
+      setSelectedCompetitionId((current) => {
+        if (current && list.some((competition) => competition.id === current)) return current;
         return list.find(isRegistrationOpen)?.id || list[0]?.id || '';
       });
     } catch (loadError) {
@@ -64,15 +64,15 @@ export function TeamHomeScreen() {
     }
   }, [user]);
 
-  const loadTeam = useCallback(async (eventId: string) => {
-    if (!eventId) {
+  const loadTeam = useCallback(async (competitionId: string) => {
+    if (!competitionId) {
       setTeam(null);
       return;
     }
     setTeamLoading(true);
     setTeamError('');
     try {
-      const response = await teamsApi.getMyTeam(eventId);
+      const response = await teamsApi.getMyTeam(competitionId);
       setTeam(response.data);
     } catch (loadError) {
       setTeam(null);
@@ -83,16 +83,16 @@ export function TeamHomeScreen() {
   }, []);
 
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   useEffect(() => {
-    loadTeam(selectedEventId);
-  }, [loadTeam, selectedEventId]);
+    loadTeam(selectedCompetitionId);
+  }, [loadTeam, selectedCompetitionId]);
 
   function refreshAll() {
-    loadEvents('refresh');
-    if (selectedEventId) loadTeam(selectedEventId);
+    loadCompetitions('refresh');
+    if (selectedCompetitionId) loadTeam(selectedCompetitionId);
   }
 
   if (loading) {
@@ -108,7 +108,7 @@ export function TeamHomeScreen() {
     return (
       <View style={styles.container}>
         <Header title="Team" subtitle="Registration and team management" user={user} />
-        <ErrorState message={error} onRetry={() => loadEvents()} />
+        <ErrorState message={error} onRetry={() => loadCompetitions()} />
       </View>
     );
   }
@@ -123,42 +123,42 @@ export function TeamHomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing || teamLoading} onRefresh={refreshAll} />}
         ListHeaderComponent={(
           <>
-            <Text style={styles.sectionLabel}>Event</Text>
+            <Text style={styles.sectionLabel}>Competition</Text>
             <FlatList
               horizontal
-              data={events}
+              data={competitions}
               keyExtractor={(item) => item.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.eventChips}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  onPress={() => setSelectedEventId(item.id)}
-                  style={[styles.eventChip, selectedEventId === item.id && styles.eventChipOn]}
+                  onPress={() => setSelectedCompetitionId(item.id)}
+                  style={[styles.eventChip, selectedCompetitionId === item.id && styles.eventChipOn]}
                 >
-                  <Text style={[styles.eventChipText, selectedEventId === item.id && styles.eventChipTextOn]} numberOfLines={1}>
+                  <Text style={[styles.eventChipText, selectedCompetitionId === item.id && styles.eventChipTextOn]} numberOfLines={1}>
                     {item.title}
                   </Text>
                 </TouchableOpacity>
               )}
             />
 
-            {selectedEvent ? (
+            {selectedCompetition ? (
               <View style={styles.eventCard}>
                 <View style={styles.cardTop}>
-                  <Text style={styles.eventTitle}>{selectedEvent.title}</Text>
-                  <StatusBadge value={selectedEvent.status} />
+                  <Text style={styles.eventTitle}>{selectedCompetition.title}</Text>
+                  <StatusBadge value={selectedCompetition.status} />
                 </View>
-                <Text style={styles.eventSub}>Registration: {formatDateRange(selectedEvent.registrationStart, selectedEvent.registrationEnd)}</Text>
+                <Text style={styles.eventSub}>Registration: {formatDateRange(selectedCompetition.registrationStart, selectedCompetition.registrationEnd)}</Text>
                 <View style={styles.actionGrid}>
                   <ActionButton
                     icon={<TicketCheck color={Colors.primary} size={18} />}
                     label="Register"
-                    onPress={() => navigation.navigate('EventRegistration', { eventId: selectedEvent.id })}
+                    onPress={() => navigation.navigate('CompetitionRegistration', { competitionId: selectedCompetition.id })}
                   />
                   <ActionButton
                     icon={<Plus color={Colors.primary} size={18} />}
                     label="Create team"
-                    onPress={() => navigation.navigate('CreateTeam', { eventId: selectedEvent.id })}
+                    onPress={() => navigation.navigate('CreateTeam', { competitionId: selectedCompetition.id })}
                   />
                   <ActionButton
                     icon={<MailPlus color={Colors.primary} size={18} />}
@@ -168,23 +168,23 @@ export function TeamHomeScreen() {
                   <ActionButton
                     icon={<ClipboardCheck color={Colors.primary} size={18} />}
                     label="Attendance"
-                    onPress={() => navigation.navigate('AttendanceHistory', { eventId: selectedEvent.id })}
+                    onPress={() => navigation.navigate('AttendanceHistory', { competitionId: selectedCompetition.id })}
                   />
                   <ActionButton
                     icon={<QrCode color={Colors.primary} size={18} />}
                     label="Scan QR"
-                    onPress={() => navigation.navigate('QrCheckIn', { eventId: selectedEvent.id, eventTitle: selectedEvent.title })}
+                    onPress={() => navigation.navigate('QrCheckIn', { competitionId: selectedCompetition.id, eventTitle: selectedCompetition.title })}
                   />
                 </View>
                 {hasPermission('PARTICIPANT_APPROVE') && (
-                  <TouchableOpacity style={styles.checkInButton} onPress={() => navigation.navigate('CheckIn', { eventId: selectedEvent.id })}>
+                  <TouchableOpacity style={styles.checkInButton} onPress={() => navigation.navigate('CheckIn', { competitionId: selectedCompetition.id })}>
                     <ClipboardCheck color="#fff" size={17} />
                     <Text style={styles.checkInText}>Open coordinator check-in</Text>
                   </TouchableOpacity>
                 )}
               </View>
             ) : (
-              <EmptyState title="No events available" message="Events you can view will appear here." />
+              <EmptyState title="No competitions available" message="Competitions you can view will appear here." />
             )}
 
             <View style={styles.teamHeader}>
@@ -195,7 +195,7 @@ export function TeamHomeScreen() {
             {!teamLoading && !team && (
               <View style={styles.emptyCard}>
                 <UsersRound color={Colors.textMuted} size={30} />
-                <Text style={styles.emptyTitle}>No team for this event</Text>
+                <Text style={styles.emptyTitle}>No team for this competition</Text>
                 <Text style={styles.emptySub}>
                   {teamError || 'Create a team or accept an invitation to join one.'}
                 </Text>
@@ -205,8 +205,8 @@ export function TeamHomeScreen() {
             {!!team && (
               <>
                 <TeamSummary
-                  canInvite={canManageInvitations(team, user?.id, selectedEvent)}
-                  onInvite={() => navigation.navigate('InviteMembers', { teamId: team.id, eventId: team.eventId })}
+                  canInvite={canManageInvitations(team, user?.id, selectedCompetition)}
+                  onInvite={() => navigation.navigate('InviteMembers', { teamId: team.id, competitionId: team.competitionId })}
                   team={team}
                 />
                 <View style={styles.teamTools}>
@@ -214,9 +214,9 @@ export function TeamHomeScreen() {
                     icon={<FileText color={Colors.primary} size={18} />}
                     label="Submissions"
                     onPress={() => navigation.navigate('Submissions', {
-                      eventId: team.eventId,
+                      competitionId: team.competitionId,
                       teamId: team.id,
-                      eventTitle: selectedEvent?.title,
+                      eventTitle: selectedCompetition?.title,
                       teamName: team.name,
                     })}
                   />
@@ -224,9 +224,9 @@ export function TeamHomeScreen() {
                     icon={<GitBranch color={Colors.primary} size={18} />}
                     label="Repositories"
                     onPress={() => navigation.navigate('RepositoryViewer', {
-                      eventId: team.eventId,
+                      competitionId: team.competitionId,
                       teamId: team.id,
-                      eventTitle: selectedEvent?.title,
+                      eventTitle: selectedCompetition?.title,
                       teamName: team.name,
                     })}
                   />
@@ -278,7 +278,7 @@ function TeamSummary({ canInvite, onInvite, team }: { canInvite: boolean; onInvi
       <View style={styles.cardTop}>
         <View style={styles.flex}>
           <Text style={styles.teamName}>{team.name}</Text>
-          <Text style={styles.eventSub}>{team.projectName || team.event?.title || 'Project name not set'}</Text>
+          <Text style={styles.eventSub}>{team.projectName || team.competition?.title || 'Project name not set'}</Text>
         </View>
         <StatusBadge value={team.status} />
       </View>
@@ -286,7 +286,7 @@ function TeamSummary({ canInvite, onInvite, team }: { canInvite: boolean; onInvi
       <View style={styles.statRow}>
         <Stat label="Members" value={String(getTeamMemberCount(team))} />
         <Stat label="Invites" value={String(team.invitations.filter((invite) => invite.status === 'PENDING').length)} />
-        <Stat label="Required" value={String(team.event?.minTeamMembers || 3)} />
+        <Stat label="Required" value={String(team.competition?.minTeamMembers || 3)} />
       </View>
       <View style={styles.mentorSection}>
         <Text style={styles.mentorLabel}>Assigned mentors</Text>

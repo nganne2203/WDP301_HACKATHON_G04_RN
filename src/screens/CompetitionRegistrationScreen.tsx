@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CalendarCheck, GraduationCap } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { participantsApi } from '../features/participants/api/participantsApi';
 import { isRegistrationOpen } from '../features/teams/model/teamHelpers';
-import type { Event, Participant } from '../core/api/types';
+import type { Competition, Participant } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange } from '../core/utils/format';
@@ -22,12 +22,12 @@ import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
 import { Colors, Radius, Shadow } from '../theme/colors';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'EventRegistration'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'CompetitionRegistration'>;
 
-export function EventRegistrationScreen({ navigation, route }: Props) {
-  const { eventId } = route.params;
+export function CompetitionRegistrationScreen({ navigation, route }: Props) {
+  const { competitionId } = route.params;
   const { user } = useAuth();
-  const [event, setEvent] = useState<Event | null>(null);
+  const [competition, setCompetition] = useState<Competition | null>(null);
   const [chapterName, setChapterName] = useState('');
   const [isGraduated, setIsGraduated] = useState(false);
   const [consentMediaUse, setConsentMediaUse] = useState(false);
@@ -37,29 +37,29 @@ export function EventRegistrationScreen({ navigation, route }: Props) {
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
 
-  const loadEvent = useCallback(async () => {
+  const loadCompetition = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await eventsApi.getById(eventId);
-      setEvent(response.data);
+      const response = await competitionsApi.getById(competitionId);
+      setCompetition(response.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [competitionId]);
 
   useEffect(() => {
-    loadEvent();
-  }, [loadEvent]);
+    loadCompetition();
+  }, [loadCompetition]);
 
   async function handleRegister() {
     setSubmitting(true);
     setFormError('');
     try {
       const response = await participantsApi.register({
-        eventId,
+        competitionId,
         chapterName: chapterName.trim() || null,
         isGraduated,
         consentMediaUse,
@@ -73,18 +73,18 @@ export function EventRegistrationScreen({ navigation, route }: Props) {
   }
 
   if (loading) return <LoadingState label="Loading registration..." />;
-  if (error) return <ErrorState message={error} onRetry={loadEvent} />;
-  if (!event) return <EmptyState title="Event not found" />;
+  if (error) return <ErrorState message={error} onRetry={loadCompetition} />;
+  if (!competition) return <EmptyState title="Competition not found" />;
 
-  const registrationOpen = isRegistrationOpen(event);
+  const registrationOpen = isRegistrationOpen(competition);
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
       <View style={styles.hero}>
-        <StatusBadge value={event.status} />
-        <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.sub}>{formatDateRange(event.registrationStart, event.registrationEnd)}</Text>
-        {!!event.description && <Text style={styles.description}>{event.description}</Text>}
+        <StatusBadge value={competition.status} />
+        <Text style={styles.title}>{competition.title}</Text>
+        <Text style={styles.sub}>{formatDateRange(competition.registrationStart, competition.registrationEnd)}</Text>
+        {!!competition.description && <Text style={styles.description}>{competition.description}</Text>}
       </View>
 
       {participant ? (
@@ -94,14 +94,14 @@ export function EventRegistrationScreen({ navigation, route }: Props) {
           <Text style={styles.successText}>
             Your participant status is {participant.status}. Check-in status is {participant.checkInStatus.replaceAll('_', ' ')}.
           </Text>
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('TeamHome', { eventId })}>
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('TeamHome', { competitionId })}>
             <Text style={styles.secondaryText}>Continue to team setup</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.card}>
           {!registrationOpen && (
-            <Text style={styles.warning}>Registration is not open for this event.</Text>
+            <Text style={styles.warning}>Registration is not open for this competition.</Text>
           )}
           {!!formError && <Text style={styles.error}>{formError}</Text>}
 
@@ -125,7 +125,7 @@ export function EventRegistrationScreen({ navigation, route }: Props) {
           <View style={styles.switchRow}>
             <View style={styles.switchText}>
               <Text style={styles.switchTitle}>Media consent</Text>
-              <Text style={styles.switchSub}>Allow event media usage for this registration.</Text>
+              <Text style={styles.switchSub}>Allow competition media usage for this registration.</Text>
             </View>
             <Switch onValueChange={setConsentMediaUse} value={consentMediaUse} />
           </View>
@@ -142,7 +142,7 @@ export function EventRegistrationScreen({ navigation, route }: Props) {
             onPress={handleRegister}
             style={[styles.primaryButton, (!registrationOpen || submitting) && styles.disabled]}
           >
-            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Register for event</Text>}
+            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Register for competition</Text>}
           </TouchableOpacity>
         </View>
       )}

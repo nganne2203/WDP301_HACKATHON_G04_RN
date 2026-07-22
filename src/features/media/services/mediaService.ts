@@ -1,14 +1,14 @@
 import { mediaRepository } from '../repository/mediaRepository';
 import { validateUploadFile } from '../models/mediaHelpers';
 import type {
-  EventGalleryFilter,
+  CompetitionGalleryFilter,
   MediaHistoryFilter,
   UploadMediaRequest,
 } from '../../../core/api/types';
 
 export const mediaService = {
   upload: (request: UploadMediaRequest) => {
-    if (!request.eventId) throw new Error('Event is required.');
+    if (!request.competitionId) throw new Error('Competition is required.');
     if (!request.title?.trim()) throw new Error('Title is required.');
     const fileError = validateUploadFile(request.file);
     if (fileError) throw new Error(fileError);
@@ -20,7 +20,7 @@ export const mediaService = {
     });
   },
   getMyHistory: (filters?: MediaHistoryFilter) => mediaRepository.getMyHistory(filters),
-  getEventGallery: (eventId: string, filters?: EventGalleryFilter) => mediaRepository.getEventGallery(eventId, filters),
+  getCompetitionGallery: (competitionId: string, filters?: CompetitionGalleryFilter) => mediaRepository.getCompetitionGallery(competitionId, filters),
   getViewUrl: (mediaId: string) => mediaRepository.getViewUrl(mediaId),
   deleteOwn: (mediaId: string) => mediaRepository.deleteOwn(mediaId),
 };

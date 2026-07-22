@@ -29,7 +29,7 @@ type SaveMode = 'idle' | 'draft' | 'submit';
 export function ScoreSheetScreen({ navigation, route }: Props) {
   const {
     boardId,
-    eventId,
+    competitionId,
     repositoryId,
     roundId,
     rubricId,
@@ -148,7 +148,7 @@ export function ScoreSheetScreen({ navigation, route }: Props) {
     try {
       const response = await scoringApi.submitSheet({
         scoreSheetId: scoreSheet?.id,
-        eventId,
+        competitionId,
         roundId,
         boardId,
         teamId,

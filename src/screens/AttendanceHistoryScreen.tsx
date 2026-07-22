@@ -14,7 +14,7 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'AttendanceHistory'>;
 
 export function AttendanceHistoryScreen({ route }: Props) {
-  const { eventId } = route.params;
+  const { competitionId } = route.params;
   const { user, hasPermission } = useAuth();
   const [items, setItems] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export function AttendanceHistoryScreen({ route }: Props) {
     setError('');
     try {
       const response = await participantsApi.list({
-        eventId,
+        competitionId,
         userId: user?.id,
         page: 1,
         limit: 50,
@@ -44,7 +44,7 @@ export function AttendanceHistoryScreen({ route }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [eventId, hasPermission, user?.id]);
+  }, [competitionId, hasPermission, user?.id]);
 
   useEffect(() => {
     loadItems();
@@ -78,11 +78,11 @@ export function AttendanceHistoryScreen({ route }: Props) {
           <Text style={styles.sub}>Check-in and attended activities for your participant record.</Text>
         </View>
       )}
-      ListEmptyComponent={<EmptyState title="No attendance records" message="Register for this event to create a participant record." />}
+      ListEmptyComponent={<EmptyState title="No attendance records" message="Register for this competition to create a participant record." />}
       renderItem={({ item }) => (
         <View style={styles.card}>
           <View style={styles.top}>
-            <Text style={styles.cardTitle}>{item.event?.title || 'Event registration'}</Text>
+            <Text style={styles.cardTitle}>{item.competition?.title || 'Competition registration'}</Text>
             <StatusBadge value={item.checkInStatus} />
           </View>
           <Text style={styles.meta}>Participant status: {item.status}</Text>

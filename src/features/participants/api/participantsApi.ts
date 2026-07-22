@@ -14,7 +14,7 @@ export const participantsApi = {
 
   getById: (id: string) => api.get<Participant>(`/participants/${id}`),
 
-  getMine: (eventId: string) => api.get<Participant>('/participants/me', { params: { eventId } }),
+  getMine: (competitionId: string) => api.get<Participant>('/participants/me', { params: { competitionId } }),
 
   register: (data: CreateParticipantRequest) => api.post<Participant>('/participants', data),
 

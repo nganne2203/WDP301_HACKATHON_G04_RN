@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SubmissionEditor'>;
 type ActionMode = 'idle' | 'save' | 'submit';
 
 export function SubmissionEditorScreen({ navigation, route }: Props) {
-  const { eventId, teamId, roundId, submissionId } = route.params;
+  const { competitionId, teamId, roundId, submissionId } = route.params;
   const [rounds, setRounds] = useState<Round[]>([]);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -54,8 +54,8 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     setError('');
     try {
       const [roundResponse, repositoryResponse] = await Promise.all([
-        roundsApi.list({ eventId, limit: 50 }),
-        repositoriesApi.list({ eventId, teamId, limit: 50 }),
+        roundsApi.list({ competitionId, limit: 50 }),
+        repositoriesApi.list({ competitionId, teamId, limit: 50 }),
       ]);
       const loadedRounds = roundResponse.data;
       setRounds(loadedRounds);
@@ -78,7 +78,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, roundId, submissionId, teamId]);
+  }, [competitionId, roundId, submissionId, teamId]);
 
   useEffect(() => {
     loadData();
@@ -107,7 +107,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
       const response = submission
         ? await submissionsApi.update(submission.id, payload)
         : await submissionsApi.create({
-          eventId,
+          competitionId,
           teamId,
           roundId: selectedRoundId,
           ...payload,
@@ -171,7 +171,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     const response = submission
       ? await submissionsApi.update(submission.id, payload)
       : await submissionsApi.create({
-        eventId,
+        competitionId,
         teamId,
         roundId: selectedRoundId,
         ...payload,

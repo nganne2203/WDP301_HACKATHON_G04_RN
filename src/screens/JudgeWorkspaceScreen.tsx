@@ -11,17 +11,17 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ClipboardCheck, FileText, Scale } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
 import { participantsApi } from '../features/participants/api/participantsApi';
 import { judgingBoardsApi } from '../features/judging/api/judgingBoardsApi';
 import { roundsApi } from '../features/rounds/api/roundsApi';
 import { scoringApi } from '../features/scoring/api/scoringApi';
 import { submissionsApi } from '../features/submissions/api/submissionsApi';
-import type { Event, JudgingBoard, JudgingBoardTeam, Round, ScoreSheet, Submission } from '../core/api/types';
+import type { Competition, JudgingBoard, JudgingBoardTeam, Round, ScoreSheet, Submission } from '../core/api/types';
 import { useAuth } from '../core/session/AuthContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { errorMessage, formatDateTime } from '../core/utils/format';
-import { filterVisibleEvents } from '../core/utils/eventVisibility';
+import { filterVisibleCompetitions } from '../core/utils/CompetitionVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -32,20 +32,20 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export function JudgeWorkspaceScreen() {
   const navigation = useNavigation<Navigation>();
   const { user, hasPermission } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [boards, setBoards] = useState<JudgingBoard[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [scoreSheets, setScoreSheets] = useState<ScoreSheet[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
   const [selectedRoundId, setSelectedRoundId] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || events[0] || null,
-    [events, selectedEventId]
+  const selectedCompetition = useMemo(
+    () => competitions.find((competition) => competition.id === selectedCompetitionId) || competitions[0] || null,
+    [competitions, selectedCompetitionId]
   );
 
   const selectedRound = useMemo(
@@ -73,18 +73,18 @@ export function JudgeWorkspaceScreen() {
     }, {});
   }, [scoreSheets]);
 
-  const loadEvents = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
+  const loadCompetitions = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
     if (mode === 'refresh') setRefreshing(true);
     else setLoading(true);
     setError('');
 
     try {
-      const response = await eventsApi.list({ page: 1, limit: 50 });
-      const visibleEvents = await filterVisibleEvents(response.data, user, participantsApi.getMine);
-      setEvents(visibleEvents);
-      setSelectedEventId((current) => {
-        if (current && visibleEvents.some((event) => event.id === current)) return current;
-        return visibleEvents[0]?.id || '';
+      const response = await competitionsApi.list({ page: 1, limit: 50 });
+      const visibleCompetitions = await filterVisibleCompetitions(response.data, user, participantsApi.getMine);
+      setCompetitions(visibleCompetitions);
+      setSelectedCompetitionId((current) => {
+        if (current && visibleCompetitions.some((competition) => competition.id === current)) return current;
+        return visibleCompetitions[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -94,8 +94,8 @@ export function JudgeWorkspaceScreen() {
     }
   }, [user]);
 
-  const loadRoundContext = useCallback(async (eventId: string) => {
-    if (!eventId) {
+  const loadRoundContext = useCallback(async (competitionId: string) => {
+    if (!competitionId) {
       setRounds([]);
       setBoards([]);
       setSubmissions([]);
@@ -105,7 +105,7 @@ export function JudgeWorkspaceScreen() {
 
     setError('');
     try {
-      const roundResponse = await roundsApi.list({ eventId, limit: 50 });
+      const roundResponse = await roundsApi.list({ competitionId, limit: 50 });
       setRounds(roundResponse.data);
       setSelectedRoundId((current) => {
         if (current && roundResponse.data.some((round) => round.id === current)) return current;
@@ -152,20 +152,20 @@ export function JudgeWorkspaceScreen() {
   }, [hasPermission, user?.id]);
 
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   useEffect(() => {
-    loadRoundContext(selectedEvent?.id || '');
-  }, [loadRoundContext, selectedEvent?.id]);
+    loadRoundContext(selectedCompetition?.id || '');
+  }, [loadRoundContext, selectedCompetition?.id]);
 
   useEffect(() => {
     loadScoringContext(selectedRound);
   }, [loadScoringContext, selectedRound]);
 
   function refreshAll() {
-    loadEvents('refresh');
-    if (selectedEvent?.id) loadRoundContext(selectedEvent.id);
+    loadCompetitions('refresh');
+    if (selectedCompetition?.id) loadRoundContext(selectedCompetition.id);
     if (selectedRound) loadScoringContext(selectedRound);
   }
 
@@ -184,7 +184,7 @@ export function JudgeWorkspaceScreen() {
     return (
       <View style={styles.container}>
         <Header title="Judging" subtitle="Assigned teams and score sheets" user={user} />
-        <ErrorState message={error} onRetry={() => loadEvents()} />
+        <ErrorState message={error} onRetry={() => loadCompetitions()} />
       </View>
     );
   }
@@ -199,7 +199,7 @@ export function JudgeWorkspaceScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
         ListHeaderComponent={(
           <>
-            <Selector label="Event" items={events} selectedId={selectedEvent?.id || ''} onSelect={setSelectedEventId} />
+            <Selector label="Competition" items={competitions} selectedId={selectedCompetition?.id || ''} onSelect={setSelectedCompetitionId} />
             <Selector label="Round" items={rounds} selectedId={selectedRound?.id || ''} onSelect={setSelectedRoundId} />
 
             {selectedRound ? (
@@ -241,7 +241,7 @@ export function JudgeWorkspaceScreen() {
             submission={submissionByTeam[item.id]}
             team={item}
             onPress={() => navigation.navigate('ScoreSheet', {
-              eventId: selectedEvent!.id,
+              competitionId: selectedCompetition!.id,
               roundId: selectedRound!.id,
               boardId: myBoard!.id,
               teamId: item.id,

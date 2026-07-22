@@ -21,7 +21,7 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'RepositoryViewer'>;
 
 export function RepositoryViewerScreen({ navigation, route }: Props) {
-  const { eventId, teamId, eventTitle, teamName } = route.params;
+  const { competitionId, teamId, eventTitle, teamName } = route.params;
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,7 +32,7 @@ export function RepositoryViewerScreen({ navigation, route }: Props) {
     else setLoading(true);
     setError('');
     try {
-      const response = await repositoriesApi.list({ eventId, teamId, limit: 50 });
+      const response = await repositoriesApi.list({ competitionId, teamId, limit: 50 });
       setRepositories(response.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -40,7 +40,7 @@ export function RepositoryViewerScreen({ navigation, route }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [eventId, teamId]);
+  }, [competitionId, teamId]);
 
   useEffect(() => {
     loadData();
@@ -62,13 +62,13 @@ export function RepositoryViewerScreen({ navigation, route }: Props) {
             <GitBranch color={Colors.primary} size={24} />
           </View>
           <Text style={styles.title}>Repositories</Text>
-          <Text style={styles.subtitle}>{teamName || 'Your team'} - {eventTitle || 'Selected event'}</Text>
+          <Text style={styles.subtitle}>{teamName || 'Your team'} - {eventTitle || 'Selected competition'}</Text>
         </View>
       )}
       ListEmptyComponent={(
         <EmptyState
           title="No repository linked"
-          message="Repository linking is managed by event staff or GitHub setup permissions."
+          message="Repository linking is managed by competition staff or GitHub setup permissions."
         />
       )}
       renderItem={({ item }) => (
