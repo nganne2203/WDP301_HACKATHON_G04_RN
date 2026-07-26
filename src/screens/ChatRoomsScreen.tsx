@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircle } from 'lucide-react-native';
 import { chatApi } from '../features/chat/api/chatApi';
 import { useChatStore } from '../features/chat/model/chatStore';
@@ -15,9 +16,9 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export function ChatRoomsScreen() {
   const navigation = useNavigation<Navigation>();
+  const insets = useSafeAreaInsets();
   const rooms = useChatStore((state) => state.rooms);
   const setRooms = useChatStore((state) => state.setRooms);
-  const connectionStatus = useChatStore((state) => state.connectionStatus);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -55,11 +56,8 @@ export function ChatRoomsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.statusBar}>
+      <View style={[styles.statusBar, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.title}>Team chats</Text>
-        <Text style={[styles.status, connectionStatus === 'connected' && styles.statusOnline]}>
-          {connectionStatus === 'connected' ? 'Realtime online' : 'Offline mode'}
-        </Text>
       </View>
       <FlatList
         contentContainerStyle={styles.list}
@@ -118,11 +116,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
   },
   title: { color: Colors.textPrimary, fontSize: 18, fontWeight: '800' },
-  status: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  statusOnline: { color: Colors.greenDark },
   list: { padding: 16, paddingBottom: 28 },
   row: {
     alignItems: 'center',

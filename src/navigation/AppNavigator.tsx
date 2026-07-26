@@ -1,11 +1,11 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import {
   Bell,
   CalendarDays,
-  ClipboardList,
   Images,
   MessageCircle,
   Presentation,
@@ -195,9 +195,16 @@ function AppStack() {
 function BootstrapScreen() {
   return (
     <View style={styles.bootstrap}>
-      <ClipboardList color={Colors.primary} size={34} />
-      <ActivityIndicator color={Colors.primary} style={styles.spinner} />
-      <Text style={styles.bootstrapText}>Preparing your workspace...</Text>
+      <Image
+        resizeMode="contain"
+        source={require('../../assets/brand/Logo1.png')}
+        style={styles.bootstrapLogo}
+      />
+      <View style={styles.bootstrapStatus}>
+        <Text style={styles.bootstrapTitle}>SEAL Hackathon</Text>
+        <ActivityIndicator color="#22D3EE" style={styles.spinner} />
+        <Text style={styles.bootstrapText}>Loading your workspace...</Text>
+      </View>
     </View>
   );
 }
@@ -205,8 +212,21 @@ function BootstrapScreen() {
 export function AppNavigator() {
   const { isAuthenticated, isBootstrapping } = useAuth();
 
-  if (isBootstrapping) return <BootstrapScreen />;
-  return isAuthenticated ? <AppStack /> : <AuthNavigator />;
+  if (isBootstrapping) {
+    return (
+      <>
+        <StatusBar style="light" />
+        <BootstrapScreen />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <StatusBar style="dark" />
+      {isAuthenticated ? <AppStack /> : <AuthNavigator />}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -224,16 +244,34 @@ const styles = StyleSheet.create({
   },
   bootstrap: {
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
   spinner: {
-    marginTop: 18,
+    marginTop: 14,
+  },
+  bootstrapLogo: {
+    height: 320,
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -160 }],
+    width: 320,
+  },
+  bootstrapStatus: {
+    alignItems: 'center',
+    position: 'absolute',
+    top: '68%',
+  },
+  bootstrapTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   bootstrapText: {
-    color: Colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
     marginTop: 10,
   },

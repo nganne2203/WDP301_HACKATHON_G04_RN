@@ -6,6 +6,7 @@ import { useAuth } from '../../core/session/AuthContext';
 import { useChatStore } from '../../features/chat/model/chatStore';
 import { connectSocket, disconnectSocket, getSocket, type AppSocket } from './socket';
 import { SOCKET_EVENTS } from './socketEvents';
+import { useNotificationStore } from '../../features/notifications/model/notificationStore';
 
 interface SocketContextValue {
   socket: AppSocket | null;
@@ -85,6 +86,18 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         const seen = payload as { chatRoomId?: string };
         if (seen.chatRoomId) useChatStore.getState().markRoomSeen(seen.chatRoomId);
       });
+
+      activeSocket.on(SOCKET_EVENTS.NOTIFICATION_CREATED, () => {
+        useNotificationStore.getState().requestRefresh();
+      });
+
+      activeSocket.on(SOCKET_EVENTS.NOTIFICATION_READ, () => {
+        useNotificationStore.getState().requestRefresh();
+      });
+
+      activeSocket.on(SOCKET_EVENTS.NOTIFICATIONS_READ_ALL, () => {
+        useNotificationStore.getState().requestRefresh();
+      });
     }
 
     bootSocket();
@@ -99,6 +112,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       activeSocket?.off(SOCKET_EVENTS.USER_TYPING);
       activeSocket?.off(SOCKET_EVENTS.USER_STOP_TYPING);
       activeSocket?.off(SOCKET_EVENTS.MESSAGE_SEEN);
+      activeSocket?.off(SOCKET_EVENTS.NOTIFICATION_CREATED);
+      activeSocket?.off(SOCKET_EVENTS.NOTIFICATION_READ);
+      activeSocket?.off(SOCKET_EVENTS.NOTIFICATIONS_READ_ALL);
     };
   }, [isAuthenticated]);
 

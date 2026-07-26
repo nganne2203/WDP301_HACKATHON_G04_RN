@@ -6,8 +6,36 @@
     "icon": "./assets/brand/Logo1.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": { "image": "./assets/brand/Logo1.png", "resizeMode": "contain", "backgroundColor": "#000000" },
-    "ios": { "supportsTablet": false, "bundleIdentifier": "com.seal.hackathon" },
-    "android": { "adaptiveIcon": { "foregroundImage": "./assets/brand/Logo1.png", "backgroundColor": "#000000" }, "package": "com.seal.hackathon" }
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/brand/Logo1.png",
+          "color": "#000000",
+          "defaultChannel": "business-updates"
+        }
+      ]
+    ],
+    "splash": {
+      "image": "./assets/brand/Logo1.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.seal.hackathon"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/Logo1.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.seal.hackathon"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f0b0ae15-6094-4b36-a1c0-c581e90928b7"
+      }
+    }
   }
 }

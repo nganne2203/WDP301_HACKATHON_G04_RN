@@ -2,6 +2,7 @@ import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../stor
 import type { ApiErrorResponse, ApiSuccessResponse, AuthData, PaginatedData } from './types';
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+const REQUEST_TIMEOUT_MS = 15000;
 
 export class ApiError extends Error {
   code: string;
@@ -29,6 +30,27 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
 
 let refreshPromise: Promise<string | null> | null = null;
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}) {
+  const controller = new AbortController();
+  const sourceSignal = init.signal;
+  const abortFromSource = () => controller.abort();
+  sourceSignal?.addEventListener('abort', abortFromSource, { once: true });
+
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted && !sourceSignal?.aborted) {
+      throw new Error('The server took too long to respond. Please check your connection and try again.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    sourceSignal?.removeEventListener('abort', abortFromSource);
+  }
+}
+
 function buildUrl(path: string, params?: RequestOptions['params']) {
   const url = new URL(`${API_BASE_URL}${path}`);
   if (params) {
@@ -45,7 +67,7 @@ async function refreshAccessToken() {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) return null;
 
-  const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}/auth/refresh-token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
@@ -97,7 +119,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     ...fetchOptions,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -109,7 +131,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       const newToken = await getFreshToken();
       if (newToken) {
         headers.Authorization = `Bearer ${newToken}`;
-        const retryResponse = await fetch(url, {
+        const retryResponse = await fetchWithTimeout(url, {
           ...fetchOptions,
           headers,
           body: body !== undefined ? JSON.stringify(body) : undefined,
