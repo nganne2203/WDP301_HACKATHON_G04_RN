@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MonitorPlay, UserRound } from 'lucide-react-native';
+import { MonitorPlay, Trophy, UserRound } from 'lucide-react-native';
 import { workshopsApi } from '../features/workshops/api/workshopsApi';
 import type { Workshop } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -82,6 +82,12 @@ export function WorkshopListScreen() {
               </View>
               <StatusBadge value={item.status} />
             </View>
+            <View style={styles.competitionRow}>
+              <Trophy color={Colors.primary} size={14} />
+              <Text style={styles.competition} numberOfLines={1}>
+                {item.competition?.title || 'Competition unavailable'}
+              </Text>
+            </View>
             <Text style={styles.title}>{item.title}</Text>
             {!!item.description && <Text style={styles.description} numberOfLines={2}>{item.description}</Text>}
             <Text style={styles.time}>{formatDateTime(item.startTime)}</Text>
@@ -119,6 +125,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
+  competitionRow: { alignItems: 'center', flexDirection: 'row', gap: 6, marginBottom: 8 },
+  competition: { color: Colors.primary, flex: 1, fontSize: 12, fontWeight: '800' },
   title: { color: Colors.textPrimary, fontSize: 17, fontWeight: '800' },
   description: { color: Colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 8 },
   time: { color: Colors.textPrimary, fontSize: 13, fontWeight: '700', marginTop: 12 },

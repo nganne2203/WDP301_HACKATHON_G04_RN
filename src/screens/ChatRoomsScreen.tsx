@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, Touchabl
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MessageCircle } from 'lucide-react-native';
+import { MessageCircle, Trophy } from 'lucide-react-native';
 import { chatApi } from '../features/chat/api/chatApi';
 import { useChatStore } from '../features/chat/model/chatStore';
 import type { ChatRoom } from '../core/api/types';
@@ -91,6 +91,12 @@ function ChatRoomRow({ room, onPress }: { room: ChatRoom; onPress: () => void })
           <Text style={styles.roomName} numberOfLines={1}>{room.team?.name || 'Team chat'}</Text>
           <Text style={styles.time}>{formatDateTime(room.lastMessage?.createdAt || room.updatedAt)}</Text>
         </View>
+        <View style={styles.competitionRow}>
+          <Trophy color={Colors.primary} size={12} />
+          <Text style={styles.competition} numberOfLines={1}>
+            {room.team?.competition?.title || 'Competition unavailable'}
+          </Text>
+        </View>
         <Text style={styles.preview} numberOfLines={1}>
           {room.lastMessage ? room.lastMessage.message : 'No messages yet'}
         </Text>
@@ -143,6 +149,8 @@ const styles = StyleSheet.create({
   rowTop: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'space-between' },
   roomName: { color: Colors.textPrimary, flex: 1, fontSize: 14, fontWeight: '800' },
   time: { color: Colors.textMuted, fontSize: 10, maxWidth: 92 },
+  competitionRow: { alignItems: 'center', flexDirection: 'row', gap: 5, marginTop: 4 },
+  competition: { color: Colors.primary, flex: 1, fontSize: 11, fontWeight: '700' },
   preview: { color: Colors.textSecondary, fontSize: 12, marginTop: 4 },
   unread: {
     alignItems: 'center',
