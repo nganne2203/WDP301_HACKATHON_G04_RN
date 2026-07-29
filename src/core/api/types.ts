@@ -633,9 +633,17 @@ export interface InvitationDecisionResult {
 export type ChatParticipantRole = 'member' | 'mentor';
 export type ChatMessageType = 'text' | 'image' | 'file';
 
+export interface ChatCompetitionSummary {
+  id: string;
+  title?: string;
+  status?: CompetitionStatus | string;
+}
+
 export interface ChatTeamSummary {
   id: string;
   competitionId: string;
+  competition?: ChatCompetitionSummary | null;
+  competitionStatus?: CompetitionStatus | string | null;
   name: string;
   projectName?: string | null;
   status?: string;

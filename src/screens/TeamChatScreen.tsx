@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
-import { SendHorizontal } from 'lucide-react-native';
+import { SendHorizontal, Trophy } from 'lucide-react-native';
 import { chatApi } from '../features/chat/api/chatApi';
 import { teamsApi } from '../features/teams/api/teamsApi';
 import { useChatStore } from '../features/chat/model/chatStore';
@@ -205,6 +205,17 @@ export function TeamChatScreen() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+      <View style={styles.chatContext}>
+        <View style={styles.chatContextIcon}>
+          <Trophy color={Colors.primary} size={17} />
+        </View>
+        <View style={styles.chatContextBody}>
+          <Text style={styles.chatContextTeam} numberOfLines={1}>{team?.name || route.params.teamName || 'Team chat'}</Text>
+          <Text style={styles.chatContextCompetition} numberOfLines={1}>
+            {team?.competition?.title || room?.team?.competition?.title || 'Competition unavailable'}
+          </Text>
+        </View>
+      </View>
       {!!team?.assignedMentors?.length && (
         <View style={styles.mentorBar}>
           <Text style={styles.mentorLabel}>Mentor</Text>
@@ -282,6 +293,27 @@ const styles = StyleSheet.create({
   container: { backgroundColor: Colors.background, flex: 1 },
   center: { alignItems: 'center', backgroundColor: Colors.background, flex: 1, justifyContent: 'center' },
   muted: { color: Colors.textSecondary, fontSize: 13, marginTop: 10 },
+  chatContext: {
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderBottomColor: Colors.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  chatContextIcon: {
+    alignItems: 'center',
+    backgroundColor: Colors.primaryLight,
+    borderRadius: Radius.full,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  chatContextBody: { flex: 1, minWidth: 0 },
+  chatContextTeam: { color: Colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  chatContextCompetition: { color: Colors.primary, fontSize: 11, fontWeight: '700', marginTop: 2 },
   mentorBar: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
