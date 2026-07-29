@@ -93,21 +93,22 @@ export interface UpdateProfileRequest {
   githubUsername?: string | null;
 }
 
-export type EventStatus =
+export type CompetitionStatus =
   | 'DRAFT'
   | 'OPEN_REGISTRATION'
+  | 'REGISTRATION_CLOSED'
   | 'ONGOING'
   | 'SCORING'
   | 'COMPLETED'
   | 'ARCHIVED';
 
-export interface EventCreator {
+export interface CompetitionCreator {
   id: string;
   fullName?: string;
   email?: string;
 }
 
-export interface Event {
+export interface Competition {
   id: string;
   title: string;
   description?: string | null;
@@ -125,43 +126,44 @@ export interface Event {
   maxTeamMembers?: number;
   finalistSlotsPerTrack?: number;
   totalFinalistSlots?: number;
-  status: EventStatus;
-  createdBy?: EventCreator | null;
+  roundCount?: number;
+  status: CompetitionStatus;
+  createdBy?: CompetitionCreator | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ListEventsQuery {
+export interface ListCompetitionsQuery {
   page?: number;
   limit?: number;
-  status?: EventStatus;
+  status?: CompetitionStatus;
   semester?: string;
   season?: string;
   year?: number;
   search?: string;
 }
 
-export type TimelineEventType = 'WORKSHOP' | 'CHECK_IN' | 'ROUND' | 'RESULT_PUBLISHING' | 'CEREMONY' | 'OTHER';
+export type TimelineActivityType = 'WORKSHOP' | 'CHECK_IN' | 'ROUND' | 'RESULT_PUBLISHING' | 'CEREMONY' | 'OTHER';
 export type TimelineStatus = 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 
-export interface TimelineEventSummary {
+export interface TimelineActivitySummary {
   id: string;
   title: string;
   semester?: string | null;
   season?: string | null;
   year?: number | null;
-  status?: EventStatus;
+  status?: CompetitionStatus;
 }
 
-export interface TimelineEvent {
+export interface TimelineActivity {
   id: string;
-  eventId: string;
-  event?: TimelineEventSummary | null;
+  competitionId: string;
+  competition?: TimelineActivitySummary | null;
   title: string;
   description?: string | null;
   startTime?: string | null;
   endTime?: string | null;
-  eventType: TimelineEventType;
+  activityType: TimelineActivityType;
   status: TimelineStatus;
   createdAt: string;
   updatedAt: string;
@@ -170,8 +172,8 @@ export interface TimelineEvent {
 export interface ListTimelinesQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
-  eventType?: TimelineEventType;
+  competitionId?: string;
+  activityType?: TimelineActivityType;
   status?: TimelineStatus;
   search?: string;
 }
@@ -185,13 +187,13 @@ export interface UserSummary {
   githubUsername?: string | null;
 }
 
-export interface EventSummary {
+export interface CompetitionSummary {
   id: string;
   title?: string;
   seriesName?: string | null;
   season?: string | null;
   year?: number | null;
-  status?: EventStatus;
+  status?: CompetitionStatus;
 }
 
 export interface WorkshopSpeakerInfo {
@@ -204,7 +206,7 @@ export interface WorkshopSpeakerInfo {
 export interface WorkshopGoogleMeet {
   enabled: boolean;
   meetLink?: string;
-  calendarEventId?: string;
+  calendarCompetitionId?: string;
   htmlLink?: string;
   organizerUserId?: string;
   organizerEmail?: string;
@@ -213,9 +215,9 @@ export interface WorkshopGoogleMeet {
 
 export interface Workshop {
   id: string;
-  eventId: string;
-  event?: EventSummary | null;
-  timelineEventId?: string | null;
+  competitionId: string;
+  competition?: CompetitionSummary | null;
+  timelineActivityId?: string | null;
   title: string;
   description?: string | null;
   presenterId?: string | null;
@@ -250,7 +252,7 @@ export interface WorkshopQuestion {
 export interface ListWorkshopsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   presenterId?: string;
   status?: WorkshopStatus;
   search?: string;
@@ -265,10 +267,10 @@ export interface MediaUserSummary {
   fullName?: string;
 }
 
-export interface MediaEventSummary {
+export interface MediaCompetitionSummary {
   id: string;
   title?: string;
-  status?: EventStatus;
+  status?: CompetitionStatus;
 }
 
 export interface MediaTeamSummary {
@@ -279,8 +281,8 @@ export interface MediaTeamSummary {
 
 export interface MediaItem {
   id: string;
-  eventId: string;
-  event?: MediaEventSummary | null;
+  competitionId: string;
+  competition?: MediaCompetitionSummary | null;
   uploadedBy?: MediaUserSummary | null;
   uploadedById?: string;
   teamId?: string | null;
@@ -308,7 +310,7 @@ export interface MediaItem {
 }
 
 export interface MediaHistoryFilter {
-  eventId?: string;
+  competitionId?: string;
   mediaType?: MediaType;
   status?: MediaStatus;
   search?: string;
@@ -322,7 +324,7 @@ export interface MediaHistoryFilter {
   limit?: number;
 }
 
-export interface EventGalleryFilter {
+export interface CompetitionGalleryFilter {
   mediaType?: MediaType;
   search?: string;
   tags?: string;
@@ -330,7 +332,7 @@ export interface EventGalleryFilter {
   limit?: number;
 }
 
-export interface EventGalleryResponse {
+export interface CompetitionGalleryResponse {
   images: MediaItem[];
   videos: MediaItem[];
   documents: MediaItem[];
@@ -355,7 +357,7 @@ export interface MediaUploadFile {
 }
 
 export interface UploadMediaRequest {
-  eventId: string;
+  competitionId: string;
   teamId?: string | null;
   title?: string | null;
   description?: string | null;
@@ -413,19 +415,19 @@ export interface ParticipantTeamSummary {
   trackId?: string | null;
 }
 
-export interface ParticipantEventSummary {
+export interface ParticipantCompetitionSummary {
   id: string;
   title?: string;
   semester?: string | null;
   season?: string | null;
   year?: number | null;
-  status?: EventStatus;
+  status?: CompetitionStatus;
 }
 
 export interface Participant {
   id: string;
-  event: ParticipantEventSummary | null;
-  eventId: string;
+  competition: ParticipantCompetitionSummary | null;
+  competitionId: string;
   user: ParticipantUserSummary | null;
   userId: string;
   team: ParticipantTeamSummary | null;
@@ -445,7 +447,7 @@ export interface Participant {
 }
 
 export interface CreateParticipantRequest {
-  eventId: string;
+  competitionId: string;
   userId?: string;
   teamId?: string | null;
   chapterName?: string | null;
@@ -463,7 +465,7 @@ export interface CreateParticipantRequest {
 export interface ListParticipantsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   userId?: string;
   teamId?: string;
   status?: ParticipantStatus;
@@ -509,10 +511,10 @@ export interface TeamUserSummary {
   mustChangePassword?: boolean;
 }
 
-export interface TeamEventSummary {
+export interface TeamCompetitionSummary {
   id: string;
   title: string;
-  status: EventStatus;
+  status: CompetitionStatus;
   registrationStart?: string | null;
   registrationEnd?: string | null;
   minTeamMembers?: number;
@@ -531,7 +533,7 @@ export interface TeamTrackSummary {
 
 export interface TeamParticipant {
   id: string;
-  eventId: string;
+  competitionId: string;
   teamId: string;
   user: TeamUserSummary | null;
   teamRole: TeamRole;
@@ -543,7 +545,7 @@ export interface TeamParticipant {
 
 export interface TeamInvitation {
   id: string;
-  eventId: string;
+  competitionId: string;
   teamId: string;
   leaderId: string;
   invitedEmail: string;
@@ -561,13 +563,15 @@ export interface TeamInvitation {
 
 export interface Team {
   id: string;
-  event: TeamEventSummary | null;
-  eventId: string;
+  competition: TeamCompetitionSummary | null;
+  competitionId: string;
   track?: TeamTrackSummary | null;
   trackId?: string | null;
   leader: TeamUserSummary | null;
   leaderId: string;
   members: TeamUserSummary[];
+  assignedMentors?: TeamUserSummary[];
+  mentorIds?: string[];
   name: string;
   chapterName?: string | null;
   projectName?: string | null;
@@ -588,7 +592,7 @@ export interface Team {
 }
 
 export interface CreateTeamRequest {
-  eventId: string;
+  competitionId: string;
   name: string;
   trackId?: string | null;
   chapterName?: string | null;
@@ -612,6 +616,10 @@ export interface InviteMembersResult {
   invitations: TeamInvitation[];
 }
 
+export interface UpdateTeamMentorsRequest {
+  mentorIds: string[];
+}
+
 export interface ReplaceInvitationRequest {
   email: string;
 }
@@ -622,8 +630,75 @@ export interface InvitationDecisionResult {
   invitation: TeamInvitation;
 }
 
+export type ChatParticipantRole = 'member' | 'mentor';
+export type ChatMessageType = 'text' | 'image' | 'file';
+
+export interface ChatCompetitionSummary {
+  id: string;
+  title?: string;
+  status?: CompetitionStatus | string;
+}
+
+export interface ChatTeamSummary {
+  id: string;
+  competitionId: string;
+  competition?: ChatCompetitionSummary | null;
+  competitionStatus?: CompetitionStatus | string | null;
+  name: string;
+  projectName?: string | null;
+  status?: string;
+}
+
+export interface ChatSender {
+  id: string;
+  email?: string;
+  fullName?: string;
+  avatarUrl?: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatRoomId: string;
+  teamId: string;
+  senderId: string;
+  sender?: ChatSender | null;
+  senderRole: ChatParticipantRole;
+  message: string;
+  messageType: ChatMessageType;
+  clientMessageId?: string | null;
+  isSeen: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  status?: 'sending' | 'sent' | 'failed';
+}
+
+export interface ChatRoom {
+  id: string;
+  teamId: string;
+  roomKey: string;
+  team?: ChatTeamSummary | null;
+  participantRole?: ChatParticipantRole | null;
+  unreadCount: number;
+  lastMessage?: ChatMessage | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SendChatMessageRequest {
+  teamId?: string;
+  chatRoomId?: string;
+  message: string;
+  messageType?: ChatMessageType;
+  clientMessageId?: string;
+}
+
+export interface ChatUnreadCount {
+  total: number;
+  rooms: Array<{ chatRoomId: string; teamId: string; unreadCount: number }>;
+}
+
 export interface ListTeamsQuery {
-  eventId?: string;
+  competitionId?: string;
   trackId?: string;
   status?: TeamStatus;
   page?: number;
@@ -646,8 +721,8 @@ export interface RoundTeamSummary {
 
 export interface Round {
   id: string;
-  eventId: string;
-  event: { id: string; title?: string; status?: EventStatus | string } | null;
+  competitionId: string;
+  competition: { id: string; title?: string; status?: CompetitionStatus | string } | null;
   trackId: string | null;
   track: { id: string; code?: string; name?: string } | null;
   rubricId: string | null;
@@ -676,7 +751,7 @@ export interface Round {
 export interface ListRoundsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   trackId?: string;
   status?: RoundStatus;
 }
@@ -685,8 +760,8 @@ export type SubmissionStatus = 'DRAFT' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED';
 
 export interface Submission {
   id: string;
-  eventId: string;
-  event: { id: string; title?: string } | null;
+  competitionId: string;
+  competition: { id: string; title?: string } | null;
   roundId: string;
   round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
   teamId: string;
@@ -708,7 +783,7 @@ export interface Submission {
 }
 
 export interface CreateSubmissionRequest {
-  eventId: string;
+  competitionId: string;
   roundId: string;
   teamId: string;
   repositoryId?: string | null;
@@ -728,7 +803,7 @@ export interface UpdateSubmissionRequest {
 export interface ListSubmissionsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   roundId?: string;
   teamId?: string;
   repositoryId?: string;
@@ -739,13 +814,13 @@ export type RepositoryStatus = 'PENDING' | 'ACTIVE' | 'ARCHIVED' | 'DISCONNECTED
 export type RepositoryAccessState = 'UNKNOWN' | 'PENDING' | 'GRANTED' | 'REVOKED';
 export type RepositoryWebhookStatus = 'NOT_CONFIGURED' | 'PENDING' | 'REGISTERED' | 'FAILED';
 
-export interface RepositoryEventSummary {
+export interface RepositoryCompetitionSummary {
   id: string;
   title?: string;
   semester?: string | null;
   season?: string | null;
   year?: number | null;
-  status?: EventStatus | string;
+  status?: CompetitionStatus | string;
 }
 
 export interface RepositoryTeamSummary {
@@ -767,8 +842,8 @@ export interface RepositoryRoundSummary {
 
 export interface Repository {
   id: string;
-  event: RepositoryEventSummary | null;
-  eventId: string;
+  competition: RepositoryCompetitionSummary | null;
+  competitionId: string;
   team: RepositoryTeamSummary | null;
   teamId: string;
   round: RepositoryRoundSummary | null;
@@ -795,7 +870,7 @@ export interface Repository {
 export interface ListRepositoriesQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   teamId?: string;
   roundId?: string;
   status?: RepositoryStatus;
@@ -894,7 +969,7 @@ export interface RepositoryImpactDecision {
 export interface RepositoryAiReview {
   id: string;
   repositoryId: string;
-  eventId: string | null;
+  competitionId: string | null;
   teamId: string | null;
   roundId: string | null;
   commitId: string | null;
@@ -992,8 +1067,8 @@ export interface JudgingBoardTeam {
 
 export interface JudgingBoard {
   id: string;
-  eventId: string;
-  event: { id: string; title?: string } | null;
+  competitionId: string;
+  competition: { id: string; title?: string } | null;
   roundId: string;
   round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
   trackId: string | null;
@@ -1013,7 +1088,7 @@ export interface JudgingBoard {
 export interface ListJudgingBoardsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   roundId?: string;
   trackId?: string;
   status?: JudgingBoardStatus;
@@ -1039,14 +1114,13 @@ export interface Criterion {
 
 export interface Rubric {
   id: string;
-  eventId: string;
+  competitionId: string;
   roundId?: string | null;
-  event: { id: string; title?: string; status?: string } | null;
+  competition: { id: string; title?: string; status?: string } | null;
   round?: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
   title: string;
   description: string | null;
   totalScore: number | null;
-  version?: number;
   status?: RubricStatus;
   criteria: Criterion[];
   createdAt: string;
@@ -1056,7 +1130,7 @@ export interface Rubric {
 export interface ListRubricsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   roundId?: string;
   status?: RubricStatus;
 }
@@ -1076,7 +1150,7 @@ export interface ScoreEntry {
 
 export interface ScoreSheet {
   id: string;
-  eventId: string;
+  competitionId: string;
   roundId: string;
   round: { id: string; name?: string; roundType?: RoundType } | null;
   boardId: string | null;
@@ -1103,7 +1177,7 @@ export interface ScoreSheet {
 
 export interface SubmitScoreSheetRequest {
   scoreSheetId?: string;
-  eventId: string;
+  competitionId: string;
   roundId: string;
   boardId: string;
   teamId: string;
@@ -1117,7 +1191,7 @@ export interface SubmitScoreSheetRequest {
 export interface ListScoreSheetsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   roundId?: string;
   teamId?: string;
   judgeId?: string;
@@ -1139,8 +1213,8 @@ export interface RankingTeamSummary {
 
 export interface Ranking {
   id: string;
-  eventId: string;
-  event: { id: string; title?: string; status?: string } | null;
+  competitionId: string;
+  competition: { id: string; title?: string; status?: string } | null;
   rankingType: RankingType;
   roundId: string | null;
   round: { id: string; name?: string; roundType?: RoundType; status?: RoundStatus } | null;
@@ -1149,8 +1223,8 @@ export interface Ranking {
   teamId: string | null;
   team: RankingTeamSummary | null;
   score: number;
-  pointDelta: number;
-  tieBreakMethod: TieBreakMethod;
+  pointDelta?: number | null;
+  tieBreakMethod?: TieBreakMethod | null;
   tieBreakScore: number;
   penaltyScore: number;
   miniTestScore: number;
@@ -1170,7 +1244,7 @@ export interface Ranking {
 export interface ListRankingsQuery {
   page?: number;
   limit?: number;
-  eventId?: string;
+  competitionId?: string;
   roundId?: string;
   trackId?: string;
   teamId?: string;
@@ -1178,7 +1252,7 @@ export interface ListRankingsQuery {
 }
 
 export interface GenerateRankingsRequest {
-  eventId: string;
+  competitionId: string;
   roundId: string;
   rankingType?: RankingType;
 }
@@ -1189,7 +1263,7 @@ export interface GenerateRankingsResult {
 }
 
 export interface SelectFinalistsRequest {
-  eventId: string;
+  competitionId: string;
   roundId: string;
 }
 
@@ -1201,7 +1275,7 @@ export interface SelectFinalistsResult {
 export type RepositoryAccessAction = 'NONE' | 'FREEZE' | 'REVOKE';
 
 export interface PublishResultsRequest {
-  eventId: string;
+  competitionId: string;
   roundId: string;
   repositoryAccessAction?: RepositoryAccessAction;
 }

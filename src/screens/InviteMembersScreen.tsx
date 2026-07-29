@@ -144,7 +144,7 @@ export function InviteMembersScreen({ route }: Props) {
         <>
           <View style={styles.teamCard}>
             <Text style={styles.teamName}>{team.name}</Text>
-            <Text style={styles.teamSub}>{team.projectName || team.event?.title || 'Team invitations'}</Text>
+            <Text style={styles.teamSub}>{team.projectName || team.competition?.title || 'Team invitations'}</Text>
             <StatusBadge value={team.status} />
           </View>
 

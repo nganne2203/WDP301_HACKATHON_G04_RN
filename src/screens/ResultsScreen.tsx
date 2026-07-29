@@ -11,14 +11,16 @@ import {
   View,
 } from 'react-native';
 import { Award, Medal, RefreshCw, Send } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
 import { finalistsApi } from '../features/finalists/api/finalistsApi';
 import { rankingsApi } from '../features/rankings/api/rankingsApi';
 import { resultsApi } from '../features/results/api/resultsApi';
 import { roundsApi } from '../features/rounds/api/roundsApi';
-import type { Event, Ranking, RepositoryAccessAction, Round } from '../core/api/types';
+import type { Competition, Ranking, RepositoryAccessAction, Round } from '../core/api/types';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateTime } from '../core/utils/format';
+import { filterVisibleCompetitions } from '../core/utils/CompetitionVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -29,11 +31,11 @@ type ActionMode = 'idle' | 'generate' | 'select' | 'publish';
 
 export function ResultsScreen() {
   const { user, hasPermission } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [finalists, setFinalists] = useState<Ranking[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
   const [selectedRoundId, setSelectedRoundId] = useState('');
   const [activeTab, setActiveTab] = useState<ResultTab>('leaderboard');
   const [repositoryAccessAction, setRepositoryAccessAction] = useState<RepositoryAccessAction>('NONE');
@@ -45,9 +47,9 @@ export function ResultsScreen() {
 
   const canPublish = hasPermission('RESULT_PUBLISH');
 
-  const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || events[0] || null,
-    [events, selectedEventId]
+  const selectedCompetition = useMemo(
+    () => competitions.find((competition) => competition.id === selectedCompetitionId) || competitions[0] || null,
+    [competitions, selectedCompetitionId]
   );
 
   const selectedRound = useMemo(
@@ -57,17 +59,18 @@ export function ResultsScreen() {
 
   const list = activeTab === 'leaderboard' ? rankings : finalists;
 
-  const loadEvents = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
+  const loadCompetitions = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
     if (mode === 'refresh') setRefreshing(true);
     else setLoading(true);
     setError('');
 
     try {
-      const response = await eventsApi.list({ page: 1, limit: 50 });
-      setEvents(response.data);
-      setSelectedEventId((current) => {
-        if (current && response.data.some((event) => event.id === current)) return current;
-        return response.data[0]?.id || '';
+      const response = await competitionsApi.list({ page: 1, limit: 50 });
+      const visibleCompetitions = await filterVisibleCompetitions(response.data, user, participantsApi.getMine);
+      setCompetitions(visibleCompetitions);
+      setSelectedCompetitionId((current) => {
+        if (current && visibleCompetitions.some((competition) => competition.id === current)) return current;
+        return visibleCompetitions[0]?.id || '';
       });
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -75,17 +78,17 @@ export function ResultsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
-  const loadRounds = useCallback(async (eventId: string) => {
-    if (!eventId) {
+  const loadRounds = useCallback(async (competitionId: string) => {
+    if (!competitionId) {
       setRounds([]);
       return;
     }
 
     setError('');
     try {
-      const response = await roundsApi.list({ eventId, limit: 50 });
+      const response = await roundsApi.list({ competitionId, limit: 50 });
       setRounds(response.data);
       setSelectedRoundId((current) => {
         if (current && response.data.some((round) => round.id === current)) return current;
@@ -96,8 +99,8 @@ export function ResultsScreen() {
     }
   }, []);
 
-  const loadResults = useCallback(async (eventId: string, roundId: string) => {
-    if (!eventId || !roundId) {
+  const loadResults = useCallback(async (competitionId: string, roundId: string) => {
+    if (!competitionId || !roundId) {
       setRankings([]);
       setFinalists([]);
       return;
@@ -106,8 +109,8 @@ export function ResultsScreen() {
     setError('');
     try {
       const [rankingResponse, finalistResponse] = await Promise.all([
-        rankingsApi.list({ eventId, roundId, limit: 100 }),
-        finalistsApi.list({ eventId, roundId, limit: 100 }),
+        rankingsApi.list({ competitionId, roundId, limit: 100 }),
+        finalistsApi.list({ competitionId, roundId, limit: 100 }),
       ]);
       setRankings(rankingResponse.data);
       setFinalists(finalistResponse.data);
@@ -117,45 +120,45 @@ export function ResultsScreen() {
   }, []);
 
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   useEffect(() => {
-    loadRounds(selectedEvent?.id || '');
-  }, [loadRounds, selectedEvent?.id]);
+    loadRounds(selectedCompetition?.id || '');
+  }, [loadRounds, selectedCompetition?.id]);
 
   useEffect(() => {
-    loadResults(selectedEvent?.id || '', selectedRound?.id || '');
-  }, [loadResults, selectedEvent?.id, selectedRound?.id]);
+    loadResults(selectedCompetition?.id || '', selectedRound?.id || '');
+  }, [loadResults, selectedCompetition?.id, selectedRound?.id]);
 
   function refreshAll() {
-    loadEvents('refresh');
-    if (selectedEvent?.id) loadRounds(selectedEvent.id);
-    if (selectedEvent?.id && selectedRound?.id) loadResults(selectedEvent.id, selectedRound.id);
+    loadCompetitions('refresh');
+    if (selectedCompetition?.id) loadRounds(selectedCompetition.id);
+    if (selectedCompetition?.id && selectedRound?.id) loadResults(selectedCompetition.id, selectedRound.id);
   }
 
   async function runAction(mode: Exclude<ActionMode, 'idle'>) {
-    if (!selectedEvent?.id || !selectedRound?.id) return;
+    if (!selectedCompetition?.id || !selectedRound?.id) return;
     setActionMode(mode);
     setActionError('');
     try {
       if (mode === 'generate') {
-        const response = await rankingsApi.generate({ eventId: selectedEvent.id, roundId: selectedRound.id });
+        const response = await rankingsApi.generate({ competitionId: selectedCompetition.id, roundId: selectedRound.id });
         Alert.alert('Rankings generated', `${response.data.generated} leaderboard entries generated.`);
       }
       if (mode === 'select') {
-        const response = await finalistsApi.select({ eventId: selectedEvent.id, roundId: selectedRound.id });
+        const response = await finalistsApi.select({ competitionId: selectedCompetition.id, roundId: selectedRound.id });
         Alert.alert('Finalists selected', `${response.data.selected} teams selected.`);
       }
       if (mode === 'publish') {
         const response = await resultsApi.publish({
-          eventId: selectedEvent.id,
+          competitionId: selectedCompetition.id,
           roundId: selectedRound.id,
           repositoryAccessAction,
         });
         Alert.alert('Results published', `${response.data.published} rankings published. Repositories: ${response.data.repositoryAccessAction}.`);
       }
-      await loadResults(selectedEvent.id, selectedRound.id);
+      await loadResults(selectedCompetition.id, selectedRound.id);
     } catch (actionFailure) {
       setActionError(errorMessage(actionFailure));
     } finally {
@@ -187,7 +190,7 @@ export function ResultsScreen() {
     return (
       <View style={styles.container}>
         <Header title="Results" subtitle="Leaderboard and finalists" user={user} />
-        <ErrorState message={error} onRetry={() => loadEvents()} />
+        <ErrorState message={error} onRetry={() => loadCompetitions()} />
       </View>
     );
   }
@@ -202,7 +205,7 @@ export function ResultsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} />}
         ListHeaderComponent={(
           <>
-            <Selector label="Event" items={events} selectedId={selectedEvent?.id || ''} onSelect={setSelectedEventId} />
+            <Selector label="Competition" items={competitions} selectedId={selectedCompetition?.id || ''} onSelect={setSelectedCompetitionId} />
             <Selector label="Round" items={rounds} selectedId={selectedRound?.id || ''} onSelect={setSelectedRoundId} />
 
             <View style={styles.hero}>
@@ -223,7 +226,7 @@ export function ResultsScreen() {
               <TabButton label={`Finalists ${finalists.length}`} active={activeTab === 'finalists'} onPress={() => setActiveTab('finalists')} />
             </View>
 
-            {canPublish && selectedEvent && selectedRound && (
+            {canPublish && selectedCompetition && selectedRound && (
               <View style={styles.actionsCard}>
                 <Text style={styles.sectionTitle}>Coordinator actions</Text>
                 <View style={styles.actionRow}>
@@ -357,7 +360,7 @@ function RankingRow({ finalistView, ranking }: { finalistView: boolean; ranking:
       <View style={styles.statRow}>
         <Stat label="Score" value={formatNumber(ranking.score)} />
         <Stat label="Delta" value={formatNumber(ranking.pointDelta)} />
-        <Stat label="Tie break" value={ranking.tieBreakMethod.replaceAll('_', ' ')} />
+        <Stat label="Tie break" value={formatTieBreakMethod(ranking.tieBreakMethod)} />
       </View>
       <Text style={styles.rankSub}>
         {ranking.publishedAt ? `Published ${formatDateTime(ranking.publishedAt)}` : `Calculated ${formatDateTime(ranking.calculatedAt)}`}
@@ -376,8 +379,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatNumber(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+function formatNumber(value?: number | null) {
+  if (value === undefined || value === null) return '-';
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '-';
+  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(2);
+}
+
+function formatTieBreakMethod(value?: string | null) {
+  return value ? value.replaceAll('_', ' ') : 'NONE';
 }
 
 const styles = StyleSheet.create({

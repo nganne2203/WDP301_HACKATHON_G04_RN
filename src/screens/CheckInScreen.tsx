@@ -14,7 +14,7 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'CheckIn'>;
 
 export function CheckInScreen({ route }: Props) {
-  const { eventId } = route.params;
+  const { competitionId } = route.params;
   const { hasPermission } = useAuth();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export function CheckInScreen({ route }: Props) {
     else setLoading(true);
     setError('');
     try {
-      const response = await participantsApi.list({ eventId, page: 1, limit: 100 });
+      const response = await participantsApi.list({ competitionId, page: 1, limit: 100 });
       setParticipants(response.data);
     } catch (loadError) {
       setError(errorMessage(loadError));
@@ -44,7 +44,7 @@ export function CheckInScreen({ route }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [eventId, hasPermission]);
+  }, [competitionId, hasPermission]);
 
   useEffect(() => {
     loadParticipants();
@@ -83,13 +83,13 @@ export function CheckInScreen({ route }: Props) {
       style={styles.container}
       ListHeaderComponent={(
         <View style={styles.summary}>
-          <Text style={styles.summaryTitle}>Event check-in</Text>
+          <Text style={styles.summaryTitle}>Competition check-in</Text>
           <Text style={styles.summaryValue}>{checkedInCount}/{participants.length}</Text>
           <Text style={styles.summarySub}>participants checked in</Text>
           {!!error && <Text style={styles.error}>{error}</Text>}
         </View>
       )}
-      ListEmptyComponent={<EmptyState title="No participants" message="Registered participants for this event will appear here." />}
+      ListEmptyComponent={<EmptyState title="No participants" message="Registered participants for this competition will appear here." />}
       renderItem={({ item }) => (
         <View style={styles.card}>
           <View style={styles.avatar}>

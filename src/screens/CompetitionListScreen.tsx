@@ -3,11 +3,13 @@ import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } fr
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CalendarDays, Search } from 'lucide-react-native';
-import { eventsApi } from '../features/events/api/eventsApi';
-import type { Event, Pagination } from '../core/api/types';
+import { competitionsApi } from '../features/competitions/api/competitionsApi';
+import { participantsApi } from '../features/participants/api/participantsApi';
+import type { Competition, Pagination } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../core/session/AuthContext';
 import { errorMessage, formatDateRange } from '../core/utils/format';
+import { filterVisibleCompetitions } from '../core/utils/CompetitionVisibility';
 import { Header } from '../shared/ui/Header';
 import { EmptyState, ErrorState, LoadingState } from '../shared/ui/ScreenState';
 import { StatusBadge } from '../shared/ui/StatusBadge';
@@ -15,41 +17,42 @@ import { Colors, Radius, Shadow } from '../theme/colors';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-export function EventListScreen() {
+export function CompetitionListScreen() {
   const navigation = useNavigation<Navigation>();
   const { user, logout } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const loadEvents = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
+  const loadCompetitions = useCallback(async (mode: 'load' | 'refresh' = 'load') => {
     if (mode === 'refresh') setRefreshing(true);
     else setLoading(true);
     setError('');
 
     try {
-      const response = await eventsApi.list({ page: 1, limit: 20 });
-      setEvents(response.data);
-      setPagination(response.pagination);
+      const response = await competitionsApi.list({ page: 1, limit: 20 });
+      const visibleCompetitions = await filterVisibleCompetitions(response.data, user, participantsApi.getMine);
+      setCompetitions(visibleCompetitions);
+      setPagination(response.pagination ? { ...response.pagination, totalItems: visibleCompetitions.length, totalPages: 1 } : null);
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Events" subtitle="Hackathon seasons and schedules" user={user} onLogoutPress={logout} />
-        <LoadingState label="Loading events..." />
+        <Header title="Competitions" subtitle="Hackathon seasons and schedules" user={user} onLogoutPress={logout} />
+        <LoadingState label="Loading competitions..." />
       </View>
     );
   }
@@ -57,25 +60,25 @@ export function EventListScreen() {
   if (error) {
     return (
       <View style={styles.container}>
-        <Header title="Events" subtitle="Hackathon seasons and schedules" user={user} onLogoutPress={logout} />
-        <ErrorState message={error} onRetry={() => loadEvents()} />
+        <Header title="Competitions" subtitle="Hackathon seasons and schedules" user={user} onLogoutPress={logout} />
+        <ErrorState message={error} onRetry={() => loadCompetitions()} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Header title="Events" subtitle={`${pagination?.totalItems ?? events.length} available`} user={user} onLogoutPress={logout} />
+      <Header title="Competitions" subtitle={`${pagination?.totalItems ?? competitions.length} available`} user={user} onLogoutPress={logout} />
       <FlatList
         contentContainerStyle={styles.list}
-        data={events}
+        data={competitions}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadEvents('refresh')} />}
-        ListEmptyComponent={<EmptyState title="No events found" message="Events you can view will appear here." />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadCompetitions('refresh')} />}
+        ListEmptyComponent={<EmptyState title="No competitions found" message="Competitions you can view will appear here." />}
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('EventDetail', { eventId: item.id })}
+            onPress={() => navigation.navigate('CompetitionDetail', { competitionId: item.id })}
             style={styles.card}
           >
             <View style={styles.cardTop}>
@@ -97,7 +100,7 @@ export function EventListScreen() {
         ListHeaderComponent={(
           <View style={styles.searchHint}>
             <Search color={Colors.textSecondary} size={16} />
-            <Text style={styles.searchText}>Showing events available to your role</Text>
+            <Text style={styles.searchText}>Showing competitions available to your role</Text>
           </View>
         )}
       />

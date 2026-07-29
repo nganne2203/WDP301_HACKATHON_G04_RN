@@ -1,7 +1,7 @@
 import { api, getPaginated } from '../../../core/api/client';
-import type { ListTimelinesQuery, TimelineEvent } from '../../../core/api/types';
+import type { ListTimelinesQuery, TimelineActivity } from '../../../core/api/types';
 
 export const timelinesApi = {
-  list: (query?: ListTimelinesQuery) => getPaginated<TimelineEvent[]>('/timelines', query as Record<string, string | number | undefined> | undefined),
-  getById: (id: string) => api.get<TimelineEvent>(`/timelines/${id}`),
+  list: (query?: ListTimelinesQuery) => getPaginated<TimelineActivity[]>('/timelines', query as Record<string, string | number | undefined> | undefined),
+  getById: (id: string) => api.get<TimelineActivity>(`/timelines/${id}`),
 };

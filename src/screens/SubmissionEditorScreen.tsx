@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SubmissionEditor'>;
 type ActionMode = 'idle' | 'save' | 'submit';
 
 export function SubmissionEditorScreen({ navigation, route }: Props) {
-  const { eventId, teamId, roundId, submissionId } = route.params;
+  const { competitionId, teamId, roundId, submissionId } = route.params;
   const [rounds, setRounds] = useState<Round[]>([]);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -45,15 +45,17 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     [rounds, selectedRoundId]
   );
 
-  const canEdit = !submission || submission.status === 'DRAFT';
+  const canChangeDraft = !submission || submission.status === 'DRAFT';
+  const submissionGateMessage = getRoundSubmissionGateMessage(selectedRound);
+  const canEdit = canChangeDraft && !submissionGateMessage;
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const [roundResponse, repositoryResponse] = await Promise.all([
-        roundsApi.list({ eventId, limit: 50 }),
-        repositoriesApi.list({ eventId, teamId, limit: 50 }),
+        roundsApi.list({ competitionId, limit: 50 }),
+        repositoriesApi.list({ competitionId, teamId, limit: 50 }),
       ]);
       const loadedRounds = roundResponse.data;
       setRounds(loadedRounds);
@@ -76,7 +78,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, roundId, submissionId, teamId]);
+  }, [competitionId, roundId, submissionId, teamId]);
 
   useEffect(() => {
     loadData();
@@ -85,6 +87,10 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
   async function saveDraft() {
     if (!selectedRoundId) {
       setActionError('Choose a round before saving.');
+      return null;
+    }
+    if (submissionGateMessage) {
+      setActionError(submissionGateMessage);
       return null;
     }
 
@@ -101,7 +107,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
       const response = submission
         ? await submissionsApi.update(submission.id, payload)
         : await submissionsApi.create({
-          eventId,
+          competitionId,
           teamId,
           roundId: selectedRoundId,
           ...payload,
@@ -120,6 +126,10 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
 
   async function submit() {
     const hasArtifact = Boolean(repositoryId || nullableUrl(demoUrl) || nullableUrl(reportUrl) || nullableUrl(presentationUrl));
+    if (submissionGateMessage) {
+      setActionError(submissionGateMessage);
+      return;
+    }
     if (!hasArtifact) {
       setActionError('Add at least one repository or artifact URL before submitting.');
       return;
@@ -146,6 +156,10 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
       setActionError('Choose a round before submitting.');
       return null;
     }
+    if (submissionGateMessage) {
+      setActionError(submissionGateMessage);
+      return null;
+    }
 
     const payload: UpdateSubmissionRequest = {
       repositoryId,
@@ -157,7 +171,7 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
     const response = submission
       ? await submissionsApi.update(submission.id, payload)
       : await submissionsApi.create({
-        eventId,
+        competitionId,
         teamId,
         roundId: selectedRoundId,
         ...payload,
@@ -190,10 +204,10 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
         {rounds.map((item) => (
           <TouchableOpacity
-            disabled={!canEdit}
+            disabled={!canChangeDraft}
             key={item.id}
             onPress={() => setSelectedRoundId(item.id)}
-            style={[styles.chip, selectedRoundId === item.id && styles.chipOn, !canEdit && styles.disabled]}
+            style={[styles.chip, selectedRoundId === item.id && styles.chipOn, !canChangeDraft && styles.disabled]}
           >
             <Text style={[styles.chipText, selectedRoundId === item.id && styles.chipTextOn]}>{item.name}</Text>
           </TouchableOpacity>
@@ -246,7 +260,9 @@ export function SubmissionEditorScreen({ navigation, route }: Props) {
 
       {!canEdit && (
         <View style={styles.notice}>
-          <Text style={styles.noticeText}>Submitted submissions are locked on mobile.</Text>
+          <Text style={styles.noticeText}>
+            {canChangeDraft ? submissionGateMessage : 'Submitted submissions are locked on mobile.'}
+          </Text>
         </View>
       )}
 
@@ -309,6 +325,15 @@ function Input({
 function nullableUrl(value: string) {
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function getRoundSubmissionGateMessage(round?: Round | null) {
+  if (!round) return 'Choose a round before editing submission artifacts.';
+  if (round.status !== 'OPEN') return 'This round is not open for participant submissions.';
+  if (round.submissionDeadline && new Date(round.submissionDeadline).getTime() < Date.now()) {
+    return 'The submission deadline for this round has passed.';
+  }
+  return '';
 }
 
 const styles = StyleSheet.create({

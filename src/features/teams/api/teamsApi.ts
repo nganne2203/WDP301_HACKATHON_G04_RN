@@ -18,7 +18,7 @@ export const teamsApi = {
 
   getById: (id: string) => api.get<Team>(`/teams/${id}`),
 
-  getMyTeam: (eventId: string) => api.get<Team>('/teams/my', { params: { eventId } }),
+  getMyTeam: (competitionId: string) => api.get<Team>('/teams/my', { params: { competitionId } }),
 
   inviteMembers: (teamId: string, data: InviteMembersRequest) =>
     api.post<InviteMembersResult>(`/teams/${teamId}/invitations`, data),

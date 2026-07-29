@@ -1,11 +1,13 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import {
   Bell,
   CalendarDays,
-  ClipboardList,
   Images,
+  MessageCircle,
   Presentation,
   Scale,
   Trophy,
@@ -16,19 +18,22 @@ import { Colors } from '../theme/colors';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
-import { EventListScreen } from '../screens/EventListScreen';
-import { EventDetailScreen } from '../screens/EventDetailScreen';
+import { CompetitionListScreen } from '../screens/CompetitionListScreen';
+import { CompetitionDetailScreen } from '../screens/CompetitionDetailScreen';
 import { TimelineScreen } from '../screens/TimelineScreen';
 import { WorkshopListScreen } from '../screens/WorkshopListScreen';
 import { WorkshopDetailScreen } from '../screens/WorkshopDetailScreen';
 import { NotificationCenterScreen } from '../screens/NotificationCenterScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { TeamHomeScreen } from '../screens/TeamHomeScreen';
-import { EventRegistrationScreen } from '../screens/EventRegistrationScreen';
+import { ChatRoomsScreen } from '../screens/ChatRoomsScreen';
+import { TeamChatScreen } from '../screens/TeamChatScreen';
+import { CompetitionRegistrationScreen } from '../screens/CompetitionRegistrationScreen';
 import { CreateTeamScreen } from '../screens/CreateTeamScreen';
 import { InviteMembersScreen } from '../screens/InviteMembersScreen';
 import { InvitationDecisionScreen } from '../screens/InvitationDecisionScreen';
 import { CheckInScreen } from '../screens/CheckInScreen';
+import { QrCheckInScreen } from '../screens/QrCheckInScreen';
 import { AttendanceHistoryScreen } from '../screens/AttendanceHistoryScreen';
 import { SubmissionsScreen } from '../screens/SubmissionsScreen';
 import { SubmissionEditorScreen } from '../screens/SubmissionEditorScreen';
@@ -51,9 +56,10 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Events: undefined;
+  Competitions: undefined;
   Workshops: undefined;
   Team: undefined;
+  Chats: undefined;
   Media: undefined;
   Judging: undefined;
   Results: undefined;
@@ -62,26 +68,29 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
-  MainTabs: undefined;
-  EventDetail: { eventId: string };
-  Timeline: { eventId: string; eventTitle?: string };
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  CompetitionDetail: { competitionId: string };
+  Timeline: { competitionId: string; eventTitle?: string };
   WorkshopDetail: { workshopId: string };
-  EventRegistration: { eventId: string };
-  TeamHome: { eventId?: string };
-  CreateTeam: { eventId: string };
-  InviteMembers: { teamId: string; eventId: string };
+  CompetitionRegistration: { competitionId: string };
+  TeamHome: { competitionId?: string };
+  CreateTeam: { competitionId: string };
+  InviteMembers: { teamId: string; competitionId: string };
   InvitationDecision: undefined;
-  CheckIn: { eventId: string };
-  AttendanceHistory: { eventId: string };
-  Submissions: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
-  SubmissionEditor: { eventId: string; teamId: string; roundId?: string; submissionId?: string };
-  RepositoryViewer: { eventId: string; teamId: string; eventTitle?: string; teamName?: string };
+  CheckIn: { competitionId: string };
+  QrCheckIn: { competitionId: string; eventTitle?: string };
+  AttendanceHistory: { competitionId: string };
+  Submissions: { competitionId: string; teamId: string; eventTitle?: string; teamName?: string };
+  SubmissionEditor: { competitionId: string; teamId: string; roundId?: string; submissionId?: string };
+  RepositoryViewer: { competitionId: string; teamId: string; eventTitle?: string; teamName?: string };
   RepositoryDetail: { repositoryId: string };
   AiReviewDetail: { reviewId: string };
-  MediaUpload: { eventId: string };
+  MediaUpload: { competitionId: string };
   MediaDetail: { media: MediaItem };
+  ChatRooms: undefined;
+  TeamChat: { chatRoomId?: string; teamId: string; teamName?: string };
   ScoreSheet: {
-    eventId: string;
+    competitionId: string;
     roundId: string;
     boardId: string;
     teamId: string;
@@ -111,9 +120,9 @@ function AuthNavigator() {
 
 function MainTabs() {
   const { hasPermission } = useAuth();
-  const canScore = hasPermission('SCORE_VIEW') || hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
+  const canScore = hasPermission('SCORE_CREATE') || hasPermission('JUDGING_ASSIGN');
   const canViewResults = hasPermission('SCORE_VIEW') || hasPermission('RESULT_PUBLISH');
-  const canUseMedia = hasPermission('EVENT_VIEW') || hasPermission('EVENT_UPDATE');
+  const canUseMedia = hasPermission('COMPETITION_VIEW') || hasPermission('COMPETITION_UPDATE');
 
   return (
     <Tab.Navigator
@@ -121,12 +130,14 @@ function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIcon: ({ color }) => {
-          if (route.name === 'Events') return <CalendarDays color={color} size={20} />;
+          if (route.name === 'Competitions') return <CalendarDays color={color} size={20} />;
           if (route.name === 'Workshops') return <Presentation color={color} size={20} />;
           if (route.name === 'Team') return <UsersRound color={color} size={20} />;
+          if (route.name === 'Chats') return <MessageCircle color={color} size={20} />;
           if (route.name === 'Media') return <Images color={color} size={20} />;
           if (route.name === 'Judging') return <Scale color={color} size={20} />;
           if (route.name === 'Results') return <Trophy color={color} size={20} />;
@@ -135,9 +146,10 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Events" component={EventListScreen} />
+      <Tab.Screen name="Competitions" component={CompetitionListScreen} />
       <Tab.Screen name="Workshops" component={WorkshopListScreen} />
       <Tab.Screen name="Team" component={TeamHomeScreen} />
+      <Tab.Screen name="Chats" component={ChatRoomsScreen} />
       {canUseMedia && <Tab.Screen name="Media" component={MediaHomeScreen} />}
       {canScore && <Tab.Screen name="Judging" component={JudgeWorkspaceScreen} />}
       {canViewResults && <Tab.Screen name="Results" component={ResultsScreen} />}
@@ -151,15 +163,16 @@ function AppStack() {
   return (
     <RootStack.Navigator>
       <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-      <RootStack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Event Detail' }} />
+      <RootStack.Screen name="CompetitionDetail" component={CompetitionDetailScreen} options={{ title: 'Competition Detail' }} />
       <RootStack.Screen name="Timeline" component={TimelineScreen} options={{ title: 'Timeline' }} />
       <RootStack.Screen name="WorkshopDetail" component={WorkshopDetailScreen} options={{ title: 'Workshop Detail' }} />
-      <RootStack.Screen name="EventRegistration" component={EventRegistrationScreen} options={{ title: 'Register' }} />
+      <RootStack.Screen name="CompetitionRegistration" component={CompetitionRegistrationScreen} options={{ title: 'Register' }} />
       <RootStack.Screen name="TeamHome" component={TeamHomeScreen} options={{ title: 'Team' }} />
       <RootStack.Screen name="CreateTeam" component={CreateTeamScreen} options={{ title: 'Create Team' }} />
       <RootStack.Screen name="InviteMembers" component={InviteMembersScreen} options={{ title: 'Invitations' }} />
       <RootStack.Screen name="InvitationDecision" component={InvitationDecisionScreen} options={{ title: 'Join Team' }} />
       <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ title: 'Check-in' }} />
+      <RootStack.Screen name="QrCheckIn" component={QrCheckInScreen} options={{ title: 'Scan check-in QR' }} />
       <RootStack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} options={{ title: 'Attendance' }} />
       <RootStack.Screen name="Submissions" component={SubmissionsScreen} options={{ title: 'Submissions' }} />
       <RootStack.Screen name="SubmissionEditor" component={SubmissionEditorScreen} options={{ title: 'Submission' }} />
@@ -168,6 +181,12 @@ function AppStack() {
       <RootStack.Screen name="AiReviewDetail" component={AiReviewDetailScreen} options={{ title: 'AI Review' }} />
       <RootStack.Screen name="MediaUpload" component={MediaUploadScreen} options={{ title: 'Upload Media' }} />
       <RootStack.Screen name="MediaDetail" component={MediaDetailScreen} options={{ title: 'Media Detail' }} />
+      <RootStack.Screen name="ChatRooms" component={ChatRoomsScreen} options={{ title: 'Team Chats' }} />
+      <RootStack.Screen
+        name="TeamChat"
+        component={TeamChatScreen}
+        options={({ route }) => ({ title: route.params.teamName || 'Team Chat' })}
+      />
       <RootStack.Screen name="ScoreSheet" component={ScoreSheetScreen} options={{ title: 'Score Sheet' }} />
     </RootStack.Navigator>
   );
@@ -176,9 +195,16 @@ function AppStack() {
 function BootstrapScreen() {
   return (
     <View style={styles.bootstrap}>
-      <ClipboardList color={Colors.primary} size={34} />
-      <ActivityIndicator color={Colors.primary} style={styles.spinner} />
-      <Text style={styles.bootstrapText}>Preparing your workspace...</Text>
+      <Image
+        resizeMode="contain"
+        source={require('../../assets/brand/Logo1.png')}
+        style={styles.bootstrapLogo}
+      />
+      <View style={styles.bootstrapStatus}>
+        <Text style={styles.bootstrapTitle}>SEAL Hackathon</Text>
+        <ActivityIndicator color="#22D3EE" style={styles.spinner} />
+        <Text style={styles.bootstrapText}>Loading your workspace...</Text>
+      </View>
     </View>
   );
 }
@@ -186,8 +212,21 @@ function BootstrapScreen() {
 export function AppNavigator() {
   const { isAuthenticated, isBootstrapping } = useAuth();
 
-  if (isBootstrapping) return <BootstrapScreen />;
-  return isAuthenticated ? <AppStack /> : <AuthNavigator />;
+  if (isBootstrapping) {
+    return (
+      <>
+        <StatusBar style="light" />
+        <BootstrapScreen />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <StatusBar style="dark" />
+      {isAuthenticated ? <AppStack /> : <AuthNavigator />}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -205,16 +244,34 @@ const styles = StyleSheet.create({
   },
   bootstrap: {
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: '#000000',
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
   spinner: {
-    marginTop: 18,
+    marginTop: 14,
+  },
+  bootstrapLogo: {
+    height: 320,
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -160 }],
+    width: 320,
+  },
+  bootstrapStatus: {
+    alignItems: 'center',
+    position: 'absolute',
+    top: '68%',
+  },
+  bootstrapTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   bootstrapText: {
-    color: Colors.textSecondary,
+    color: '#94A3B8',
     fontSize: 13,
     marginTop: 10,
   },

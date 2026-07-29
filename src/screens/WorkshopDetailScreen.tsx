@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ExternalLink, MessageCircle, Send, ThumbsUp, UserRound } from 'lucide-react-native';
+import { ExternalLink, MessageCircle, Send, ThumbsUp, Trophy, UserRound } from 'lucide-react-native';
 import { workshopsApi } from '../features/workshops/api/workshopsApi';
 import type { Workshop, WorkshopQuestion } from '../core/api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -48,6 +48,12 @@ export function WorkshopDetailScreen({ route }: Props) {
     <ScrollView contentContainerStyle={styles.content} style={styles.container}>
       <View style={styles.hero}>
         <StatusBadge value={workshop.status} />
+        <View style={styles.competitionRow}>
+          <Trophy color={Colors.primary} size={15} />
+          <Text style={styles.competition} numberOfLines={2}>
+            {workshop.competition?.title || 'Competition unavailable'}
+          </Text>
+        </View>
         <Text style={styles.title}>{workshop.title}</Text>
         {!!workshop.description && <Text style={styles.description}>{workshop.description}</Text>}
       </View>
@@ -311,7 +317,9 @@ const styles = StyleSheet.create({
     padding: 18,
     ...Shadow.sm,
   },
-  title: { color: Colors.textPrimary, fontSize: 23, fontWeight: '800', marginTop: 14 },
+  competitionRow: { alignItems: 'center', flexDirection: 'row', gap: 7, marginTop: 14 },
+  competition: { color: Colors.primary, flex: 1, fontSize: 13, fontWeight: '800' },
+  title: { color: Colors.textPrimary, fontSize: 23, fontWeight: '800', marginTop: 8 },
   description: { color: Colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 12 },
   card: {
     backgroundColor: Colors.surface,

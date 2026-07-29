@@ -1,3 +1,5 @@
+import { ApiError } from '../api/client';
+
 export function formatDateTime(value?: string | null) {
   if (!value) return 'Not scheduled';
   const date = new Date(value);
@@ -28,6 +30,7 @@ export function initials(name?: string | null, email?: string | null) {
 }
 
 export function errorMessage(error: unknown) {
+  if (error instanceof ApiError) return error.firstError;
   if (error instanceof Error) return error.message;
   return 'Something went wrong';
 }
